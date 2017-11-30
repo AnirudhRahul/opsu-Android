@@ -5,7 +5,7 @@ All changes made to the source code can be found in the commit section.
 Can be found on the appstore at:
 https://play.google.com/store/apps/details?id=fluddokt.opsu.android&hl=en
 
-Most up to date code on this branch: https://github.com/AnirudhRahul/opsu/tree/opsu-Android
+Most up to date code on this branch: https://github.com/AnirudhRahul/opsu-Android
 
 ## Building
 
