@@ -1,0 +1,33 @@
+/Import/
+/Replays/
+/Screenshots/
+/Skins/
+/SongPacks/
+/Songs/
+/Temp/
+/.opsu.log
+/.opsu.cfg
+/.opsu.db*
+/.opsu_scores.db
+
+# Eclipse
+/.settings/
+/bin/
+.metadata
+.classpath
+.project
+.externalToolBuilders/
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Gradle
+.gradle
+build/
+
+Thumbs.db
+/target
+/build/
