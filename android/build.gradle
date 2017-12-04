@@ -16,7 +16,7 @@ android {
         instrumentTest.setRoot('tests')
     }
     defaultConfig {
-        versionCode 5
+        versionCode 7
     }
     productFlavors {
     }

@@ -706,8 +706,13 @@ public class Options {
 			@Override
 			public String getValueString() { return String.format("%d", val); }
 		},
+		HITCIRCLE_SCALE ("Hit Circle Scale", "HitCircleScale", "", 10, 0, 20){
+			@Override
+			public String getValueString() { return String.format("%.1f", val/10f); }
+
+		},
 		SCOREBOARD("Enable in-game scoreboard", "Scoreboard", "Displays the in-game scoreboard.", false),
-		DISABLE_SPINNER_UI("Remove some spinner UI elements", "DisableSpinnerUI", "Makes spinners less laggy (maybe).", false),
+		DISABLE_SPINNER_UI("Remove some spinner UI elements(Highly Reccomended)", "DisableSpinnerUI", "Makes spinners less laggy (maybe).", true),
 		;
 
 		/** Option name. */
@@ -1193,6 +1198,7 @@ public class Options {
 	 * @return the alpha level [0, 1]
 	 */
 	public static float getBackgroundDim() { return (100 - GameOption.BACKGROUND_DIM.getIntegerValue()) / 100f; }
+	public static float getHitCirleScale() { return GameOption.HITCIRCLE_SCALE.getIntegerValue()/10f; }
 
 	/**
 	 * Returns whether or not to override the beatmap background with the default playfield background.
