@@ -21,7 +21,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
 import itdelatrisu.opsu.GameMod;
-import itdelatrisu.opsu.Utils;
 import itdelatrisu.opsu.objects.curves.CatmullCurve;
 import itdelatrisu.opsu.objects.curves.CircumscribedCircle;
 import itdelatrisu.opsu.objects.curves.Curve;
@@ -63,6 +62,10 @@ public class HitObject {
 		MAX_Y = 384;
 
 	/** The x and y multipliers for hit object coordinates. */
+	private static float xCorMultiplier, yCorMultiplier;
+
+
+	/** The x and y multipliers for the hit object size!*/
 	private static float xMultiplier, yMultiplier;
 
 	/** The x and y offsets for hit object coordinates. */
@@ -162,11 +165,15 @@ public class HitObject {
 		//yMultiplier = sheight / 384f;
 		//640 = 1  512 = 2
 		//640 - (640-512) * clamp(x-1,0,1)
-		float scale = Utils.clamp(Options.getMobileUIScale()-1 , 0, 1);
-		xMultiplier = swidth / 640f;
-		yMultiplier = sheight / 480f;
-		xOffset = (int) (width - MAX_X * xMultiplier) / 2;
-		yOffset = (int) (height - MAX_Y * yMultiplier) / 2;
+//		float scale = Utils.clamp(Options.getMobileUIScale()-1 , 0, 1);
+		xMultiplier = Options.getHitCirleScale() * swidth / 640f;
+		yMultiplier = Options.getHitCirleScale() * sheight / 480f;
+//		xCorMultiplier = swidth / 640f;
+//		yCorMultiplier = sheight / 480f;
+		xCorMultiplier=xMultiplier;
+		yCorMultiplier=yMultiplier;
+		xOffset = (int) (width - MAX_X * xCorMultiplier) / 2;
+		yOffset = (int) (height - MAX_Y * yCorMultiplier) / 2;
 	}
 
 	/**
@@ -293,16 +300,16 @@ public class HitObject {
 	/**
 	 * Returns the scaled starting x coordinate.
 	 */
-	public float getScaledX() { return (x - stack * stackOffset) * xMultiplier + xOffset; }
+	public float getScaledX() { return (x - stack * stackOffset) * xCorMultiplier + xOffset; }
 
 	/**
 	 * Returns the scaled starting y coordinate.
 	 */
 	public float getScaledY() {
 		if (GameMod.HARD_ROCK.isActive())
-			return containerHeight - ((y + stack * stackOffset) * yMultiplier + yOffset);
+			return containerHeight - ((y + stack * stackOffset) * yCorMultiplier + yOffset);
 		else
-			return (y - stack * stackOffset) * yMultiplier + yOffset;
+			return (y - stack * stackOffset) * yCorMultiplier + yOffset;
 	}
 
 	/**
@@ -375,7 +382,7 @@ public class HitObject {
 
 		float[] x = new float[sliderX.length];
 		for (int i = 0; i < x.length; i++)
-			x[i] = (sliderX[i] - stack * stackOffset) * xMultiplier + xOffset;
+			x[i] = (sliderX[i] - stack * stackOffset) * xCorMultiplier + xOffset;
 		return x;
 	}
 
@@ -390,10 +397,10 @@ public class HitObject {
 		float[] y = new float[sliderY.length];
 		if (GameMod.HARD_ROCK.isActive()) {
 			for (int i = 0; i < y.length; i++)
-				y[i] = containerHeight - ((sliderY[i] + stack * stackOffset) * yMultiplier + yOffset);
+				y[i] = containerHeight - ((sliderY[i] + stack * stackOffset) * yCorMultiplier + yOffset);
 		} else {
 			for (int i = 0; i < y.length; i++)
-				y[i] = (sliderY[i] - stack * stackOffset) * yMultiplier + yOffset;
+				y[i] = (sliderY[i] - stack * stackOffset) * yCorMultiplier + yOffset;
 		}
 		return y;
 	}
