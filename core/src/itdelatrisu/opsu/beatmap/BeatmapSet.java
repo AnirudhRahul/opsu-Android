@@ -18,14 +18,14 @@
 
 package itdelatrisu.opsu.beatmap;
 
-import itdelatrisu.opsu.GameMod;
-import itdelatrisu.opsu.db.BeatmapDB;
-
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
+
+import itdelatrisu.opsu.GameMod;
+import itdelatrisu.opsu.db.BeatmapDB;
 
 /**
  * Data type containing all beatmaps in a beatmap set.
@@ -87,6 +87,7 @@ public class BeatmapSet implements Iterable<Beatmap> {
 		NumberFormat nf = new DecimalFormat("##.#");
 		String[] info = new String[5];
 		info[0] = beatmap.toString();
+		if(beatmap.creator!=null)
 		info[1] = String.format("Mapped by %s", beatmap.creator);
 		info[2] = String.format("Length: %d:%02d  BPM: %s  Objects: %d",
 				TimeUnit.MILLISECONDS.toMinutes(endTime),

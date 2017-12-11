@@ -571,9 +571,10 @@ public class HitObject {
 		sb.append(hitSound); sb.append(',');
 
 		// type-specific fields
-		if (isCircle())
-			;
-		else if (isSlider()) {
+//		if (isCircle())
+//			;
+//		else
+		if (isSlider()) {
 			sb.append(getSliderType());
 			sb.append('|');
 			for (int i = 0; i < sliderX.length; i++) {

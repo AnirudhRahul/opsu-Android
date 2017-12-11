@@ -308,16 +308,18 @@ public class DownloadsMenu extends BasicGameState {
 		/** Imports all packed beatmaps. */
 		private void importBeatmaps() {
 			// invoke unpacker and parser
+			//Unzip and retrieve files
 			File[] dirs = OszUnpacker.unpackAllFiles(Options.getImportDir(), Options.getBeatmapDir());
 			if (dirs == null || dirs.length <=0) {
 				File dlDir = DeviceInfo.info.getDownloadDir();
 				if (dlDir != null)
 					dirs = OszUnpacker.unpackAllFiles(dlDir, Options.getBeatmapDir());
 			}
+			//Parse files
 			if (dirs != null && dirs.length > 0) {
 				this.importedNode = BeatmapParser.parseDirectories(dirs);
 				if (importedNode == null)
-					UI.getNotificationManager().sendNotification("No Standard beatmaps could be loaded.", Color.red);
+					UI.getNotificationManager().sendNotification("Beatmap was not standard osu! mode.", Color.red);
 			}
 
 			DownloadList.get().clearDownloads(Download.Status.COMPLETE);

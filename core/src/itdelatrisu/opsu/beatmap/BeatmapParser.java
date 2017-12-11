@@ -130,9 +130,10 @@ public class BeatmapParser {
 	 * @return the last BeatmapSetNode parsed, or null if none
 	 */
 	public static BeatmapSetNode parseDirectories(File[] dirs, BeatmapSetList oldBeatmapList) {
-		if (dirs == null)
+		if (dirs == null) {
+		//	UI.getNotificationManager().sendNotification("Null Directory.", Color.red);
 			return null;
-
+		}
 		// progress tracking
 		status = Status.PARSING;
 		currentDirectoryIndex = 0;
@@ -154,16 +155,17 @@ public class BeatmapParser {
 		long timestamp = System.currentTimeMillis();
 		for (File dir : dirs) {
 			currentDirectoryIndex++;
-			if (!dir.isDirectory())
+			File[] files=null;
+//			if (!dir.isDirectory()&&dir.getName().toLowerCase().endsWith(".osu"))
+////				files=new File[]{dir};
+			 if(!dir.isDirectory())
 				continue;
-
-			// find all OSU files
-			File[] files = dir.listFiles(new FilenameFilter() {
+			else
+			 files = dir.listFiles(new FilenameFilter() {
 				@Override
-				public boolean accept(java.io.File dir, String name) {
-					return name.toLowerCase().endsWith(".osu");
-				}
+				public boolean accept(java.io.File dir, String name) {return name.toLowerCase().endsWith(".osu");}
 			});
+
 			if (files == null || files.length < 1)
 				continue;
 
@@ -259,6 +261,7 @@ public class BeatmapParser {
 			status = Status.INSERTING;
 			BeatmapDB.insert(parsedBeatmaps);
 		}
+
 
 		status = Status.NONE;
 		currentFile = null;

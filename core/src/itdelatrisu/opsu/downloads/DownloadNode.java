@@ -55,6 +55,9 @@ public class DownloadNode {
 	/** Song title. */
 	private final String title, titleUnicode;
 
+	//Sha1 hash of the file
+	private String hash="";
+
 	/** Song artist. */
 	private final String artist, artistUnicode;
 
@@ -260,8 +263,20 @@ public class DownloadNode {
 	 * @param artistUnicode the Unicode song artist (or {@code null} if none)
 	 * @param creator the beatmap creator
 	 */
+	//Use multiple constructors to make hash optional
 	public DownloadNode(int beatmapSetID, String date, String title,
-			String titleUnicode, String artist, String artistUnicode, String creator) {
+			String titleUnicode, String artist, String artistUnicode, String creator, String hash) {
+		this.beatmapSetID = beatmapSetID;
+		this.date = date;
+		this.title = title;
+		this.titleUnicode = titleUnicode;
+		this.artist = artist;
+		this.artistUnicode = artistUnicode;
+		this.creator = creator;
+		this.hash=hash;
+	}
+	public DownloadNode(int beatmapSetID, String date, String title,
+						String titleUnicode, String artist, String artistUnicode, String creator) {
 		this.beatmapSetID = beatmapSetID;
 		this.date = date;
 		this.title = title;
@@ -270,7 +285,6 @@ public class DownloadNode {
 		this.artistUnicode = artistUnicode;
 		this.creator = creator;
 	}
-
 	/**
 	 * Creates a download object for this node.
 	 * @param server the server to download from
@@ -336,7 +350,8 @@ public class DownloadNode {
 	public String getTitle() {
 		return (Options.useUnicodeMetadata() && titleUnicode != null && !titleUnicode.isEmpty()) ? titleUnicode : title;
 	}
-
+	//Returns the SHA1 hash of the Beatmap file
+	public String getHash() {return hash;}
 	/**
 	 * Returns the song artist.
 	 * If configured, the Unicode string will be returned instead.
@@ -369,6 +384,10 @@ public class DownloadNode {
 		g.setColor((focus) ? Colors.BLACK_BG_FOCUS : (hover) ? Colors.BLACK_BG_HOVER : Colors.BLACK_BG_NORMAL);
 		g.fillRect(buttonBaseX, y, buttonWidth, buttonHeight);
 
+		if(hash.length()!=0){
+			g.setColor(Colors.ORANGE_BUTTON);
+			g.fillRect(buttonBaseX, y, buttonWidth, buttonHeight);
+		}
 		// map is already loaded
 		if (BeatmapSetList.get().containsBeatmapSetID(beatmapSetID)) {
 			g.setColor(Colors.BLUE_BUTTON);

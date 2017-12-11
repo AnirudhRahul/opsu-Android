@@ -18,10 +18,9 @@
 
 package itdelatrisu.opsu.downloads.servers;
 
-import fluddokt.opsu.fake.Log;
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.Utils;
-import itdelatrisu.opsu.downloads.DownloadNode;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -29,9 +28,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.downloads.DownloadNode;
+import itdelatrisu.opsu.ui.UI;
 /*
 import org.newdawn.slick.util.Log;
 */
@@ -46,8 +47,9 @@ public class HexideServer extends DownloadServer {
 	/** Formatted download URL: {@code beatmapSetID,beatmapSetID} */
 	private static final String DOWNLOAD_URL = "https://osu.hexide.com/beatmaps/%d/download/%d.osz";
 
+	private String hash="";
 	/** API fields. */
-	private static final String API_FIELDS = "maps.ranked_id;maps.title;maps.date;metadata.m_title;metadata.m_artist;metadata.m_creator";
+	private static final String API_FIELDS = "maps.*;metadata.m_title;metadata.m_artist;metadata.m_creator";
 
 	/** Maximum beatmaps displayed per page. */
 	private static final int PAGE_LIMIT = 20;
@@ -98,11 +100,13 @@ public class HexideServer extends DownloadServer {
 				this.totalResults = -1;
 				return null;
 			}
-
+			UI.getNotificationManager().sendNotification(search);
 			// parse result list
 			nodes = new DownloadNode[Math.min(arr.length(), PAGE_LIMIT)];
 			for (int i = 0; i < nodes.length && i < PAGE_LIMIT; i++) {
 				JSONObject item = arr.getJSONObject(i);
+				if(item.has("hash_sha1"))
+					hash=item.getString("hash_sha1");
 				String title, artist, creator;
 				if (item.has("versions")) {
 					JSONArray versions = item.getJSONArray("versions");
@@ -110,6 +114,7 @@ public class HexideServer extends DownloadServer {
 					title = version.getString("m_title");
 					artist = version.getString("m_artist");
 					creator = version.getString("m_creator");
+
 				} else {  // "versions" is sometimes missing (?)
 					String str = item.getString("title");
 					int index = str.indexOf(" - ");
@@ -124,7 +129,7 @@ public class HexideServer extends DownloadServer {
 				}
 				nodes[i] = new DownloadNode(
 					item.getInt("ranked_id"), item.getString("date"),
-					title, null, artist, null, creator
+					title, null, artist, null, creator,hash
 				);
 			}
 

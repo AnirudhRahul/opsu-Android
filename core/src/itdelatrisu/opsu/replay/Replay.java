@@ -18,26 +18,17 @@
 
 package itdelatrisu.opsu.replay;
 
-import fluddokt.opsu.fake.*;
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.ScoreData;
-import itdelatrisu.opsu.Utils;
-import itdelatrisu.opsu.beatmap.Beatmap;
-import itdelatrisu.opsu.io.OsuReader;
-import itdelatrisu.opsu.io.OsuWriter;
-import itdelatrisu.opsu.options.Options;
+import org.tukaani.xz.LZMA2Options;
+import org.tukaani.xz.LZMAInputStream;
+import org.tukaani.xz.LZMAOutputStream;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-//import java.io.File;
-//import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-//import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -46,11 +37,21 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import fluddokt.opsu.fake.File;
+import fluddokt.opsu.fake.FileOutputStream;
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.ScoreData;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.beatmap.Beatmap;
+import itdelatrisu.opsu.io.OsuReader;
+import itdelatrisu.opsu.io.OsuWriter;
+import itdelatrisu.opsu.options.Options;
 
+//import java.io.File;
+//import java.io.FileOutputStream;
+//import java.nio.charset.StandardCharsets;
 //import org.newdawn.slick.util.Log;
-import org.tukaani.xz.LZMA2Options;
-import org.tukaani.xz.LZMAInputStream;
-import org.tukaani.xz.LZMAOutputStream;
 
 /**
  * Captures osu! replay data.
@@ -308,7 +309,6 @@ public class Replay {
 					writer.write(combo);
 					writer.write(perfect);
 					writer.write(mods);
-
 					// life data
 					StringBuilder sb = new StringBuilder();
 					if (lifeFrames != null && lifeFrames.length > 0) {
