@@ -25,6 +25,9 @@ public class User implements Comparable<User> {
 	/** Display name. */
 	private String name;
 
+	//User's password
+	private String password;
+
 	/** Total score. */
 	private long score;
 
@@ -97,6 +100,8 @@ public class User implements Comparable<User> {
 
 	/** Returns the user's name. */
 	public String getName() { return name; }
+	//Returns the user's password
+	public String getPassword() { return password; }
 
 	/** Returns the user's total score. */
 	public long getScore() { return score; }
@@ -158,6 +163,9 @@ public class User implements Comparable<User> {
 
 	/** Sets the user's name. */
 	public void setName(String name) { this.name = name; }
+
+	/** Sets the user's password. */
+	public void setPassword(String password) { this.password = password; }
 
 	/** Sets the user's icon identifier. */
 	public void setIconId(int id) { this.icon = id; }

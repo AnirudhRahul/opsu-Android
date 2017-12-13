@@ -17,9 +17,17 @@
  */
 
 package itdelatrisu.opsu.user;
-import fluddokt.opsu.fake.*;
-import fluddokt.opsu.fake.gui.*;
+import java.util.ArrayList;
+import java.util.List;
 
+import fluddokt.opsu.fake.Color;
+import fluddokt.opsu.fake.GameContainer;
+import fluddokt.opsu.fake.Graphics;
+import fluddokt.opsu.fake.Input;
+import fluddokt.opsu.fake.SlickException;
+import fluddokt.opsu.fake.TextField;
+import fluddokt.opsu.fake.gui.AbstractComponent;
+import fluddokt.opsu.fake.gui.GUIContext;
 import itdelatrisu.opsu.audio.SoundController;
 import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.options.Options;
@@ -30,9 +38,6 @@ import itdelatrisu.opsu.ui.MenuButton;
 import itdelatrisu.opsu.ui.UI;
 import itdelatrisu.opsu.ui.animations.AnimatedValue;
 import itdelatrisu.opsu.ui.animations.AnimationEquation;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /*
 import org.newdawn.slick.Color;
@@ -105,6 +110,7 @@ public class UserSelectOverlay extends AbstractComponent {
 
 	/** Textfield used for entering new user names. */
 	private TextField textField;
+    private TextField textFieldPassword;
 
 	/** New user. */
 	private User newUser;
@@ -175,7 +181,9 @@ public class UserSelectOverlay extends AbstractComponent {
 		this.textField = new TextField(container, Fonts.LARGE, 0, 0, 0, 0);
 		textField.setMaxLength(UserList.MAX_USER_NAME_LENGTH);
 		container.removeInputListener(textField);
-
+        this.textFieldPassword = new TextField(container, Fonts.LARGE, 0, 0, 0, 0);
+        textFieldPassword.setMaxLength(UserList.MAX_USER_NAME_LENGTH);
+        container.removeInputListener(textFieldPassword);
 		// new user icons
 		this.newUserIcons = new MenuButton[UserButton.getIconCount()];
 		for (int i = 0; i < newUserIcons.length; i++) {
@@ -247,9 +255,8 @@ public class UserSelectOverlay extends AbstractComponent {
 		g.setClip((int) x, (int) y, width, height);
 
 		// background
-		g.setColor(COLOR_BG);
+		g.setColor(Color.black);
 		g.fillRect(x, y, width, height);
-
 		//textField.render(container, g);
 		// render states
 		if (!stateChangeProgress.isFinished()) {
@@ -320,57 +327,80 @@ public class UserSelectOverlay extends AbstractComponent {
 
 		// user name
 		String nameHeader = "Name";
+		String passwordHeader = "Password";
 		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(nameHeader)) / 2, cy, nameHeader, COLOR_WHITE);
 		cy += Fonts.MEDIUMBOLD.getLineHeight();
 		Color textColor = COLOR_WHITE;
 		String name = newUser.getName();
-		if (name.isEmpty()) {
-			name = "Type a name...";
-			textColor = COLOR_GRAY;
-		} else if (!UserList.get().isValidUserName(name))
+		String password = newUser.getPassword();
+        if (name.isEmpty()) {
+            name = "Type a name...";
+            textColor = COLOR_GRAY;
+        }
+        if (password.isEmpty()) {
+            password = "Type a password...";
+            textColor = COLOR_GRAY;
+        }
+        if (!UserList.get().isValidUserName(name))
 			textColor = COLOR_RED;
 		int textWidth = Fonts.LARGE.getWidth(name);
+		int textWidthPassword = Fonts.LARGE.getWidth(password);
 		int searchTextX = (int) (x + (width - textWidth) / 2);
 		textField.setBound((int) x, cy, width, Fonts.LARGE.getLineHeight());
 		Fonts.LARGE.drawString(searchTextX, cy, name, textColor);
-		cy += Fonts.LARGE.getLineHeight();
 		g.setColor(textColor);
 		g.setLineWidth(2f);
+		cy+=Fonts.LARGE.getLineHeight();
 		g.drawLine(searchTextX, cy, searchTextX + textWidth, cy);
+		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(passwordHeader)) / 2, cy, passwordHeader, COLOR_WHITE);
+		cy += Fonts.MEDIUMBOLD.getLineHeight();
+		textColor=COLOR_WHITE;
+		if (!UserList.get().isValidPassword(password))
+			textColor = COLOR_RED;
+        textFieldPassword.setBound((int) x, cy, width, Fonts.LARGE.getLineHeight());
+        Fonts.LARGE.drawString(searchTextX, cy, password, textColor);
+        cy += Fonts.LARGE.getLineHeight();
+        g.setColor(textColor);
+        g.setLineWidth(2f);
+		g.drawLine(searchTextX, cy, searchTextX + textWidthPassword, cy);
+
+
+
+
 		cy += Fonts.MEDIUMBOLD.getLineHeight();
 
-		// user icons
-		String iconHeader = "Icon";
-		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(iconHeader)) / 2, cy, iconHeader, COLOR_WHITE);
-		cy += Fonts.MEDIUMBOLD.getLineHeight() + usersPaddingY;
-		int iconSize = UserButton.getIconSize();
-		int paddingX = iconSize / 4;
-		int maxPerLine = UserButton.getWidth() / (iconSize + paddingX);
-		// start scroll area here
-		g.setClip((int) x, cy, width, height - (int) (cy - y));
-		int scrollOffset = ((newUserIcons.length - 1) / maxPerLine + 1) * (iconSize + usersPaddingY);
-		scrollOffset -= height - cy;
-		scrollOffset = Math.max(scrollOffset, 0);
-		scrolling.setMinMax(0, scrollOffset);
-		cy += -scrolling.getPosition();
-		for (int i = 0; i < newUserIcons.length; i += maxPerLine) {
-			// draw line-by-line
-			int n = Math.min(maxPerLine, newUserIcons.length - i);
-			int cx = (int) (x + usersStartX + (UserButton.getWidth() - iconSize * n - paddingX * (n - 1)) / 2);
-			for (int j = 0; j < n; j++) {
-				MenuButton button = newUserIcons[i + j];
-				button.setX(cx + iconSize / 2);
-				button.setY(cy + iconSize / 2);
-				if (cy < height) {
-					button.getImage().setAlpha((newUser.getIconId() == i + j) ?
-						alpha : alpha * button.getHoverAlpha() * 0.9f
-					);
-					button.getImage().draw(cx, cy);
-				}
-				cx += iconSize + paddingX;
-			}
-			cy += iconSize + usersPaddingY;
-		}
+//		// user icons
+//		String iconHeader = "Icon";
+//		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(iconHeader)) / 2, cy, iconHeader, COLOR_WHITE);
+//		cy += Fonts.MEDIUMBOLD.getLineHeight() + usersPaddingY;
+//		int iconSize = UserButton.getIconSize();
+//		int paddingX = iconSize / 4;
+//		int maxPerLine = UserButton.getWidth() / (iconSize + paddingX);
+//		// start scroll area here
+//		g.setClip((int) x, cy, width, height - (int) (cy - y));
+//		int scrollOffset = ((newUserIcons.length - 1) / maxPerLine + 1) * (iconSize + usersPaddingY);
+//		scrollOffset -= height - cy;
+//		scrollOffset = Math.max(scrollOffset, 0);
+//		scrolling.setMinMax(0, scrollOffset);
+//		cy += -scrolling.getPosition();
+//		for (int i = 0; i < newUserIcons.length; i += maxPerLine) {
+//			// draw line-by-line
+//			int n = Math.min(maxPerLine, newUserIcons.length - i);
+//			int cx = (int) (x + usersStartX + (UserButton.getWidth() - iconSize * n - paddingX * (n - 1)) / 2);
+//			for (int j = 0; j < n; j++) {
+//				MenuButton button = newUserIcons[i + j];
+//				button.setX(cx + iconSize / 2);
+//				button.setY(cy + iconSize / 2);
+//				if (cy < height) {
+//					button.getImage().setAlpha((newUser.getIconId() == i + j) ?
+//						alpha : alpha * button.getHoverAlpha() * 0.9f
+//					);
+//					button.getImage().draw(cx, cy);
+//				}
+//				cx += iconSize + paddingX;
+//			}
+//			cy += iconSize + usersPaddingY;
+//		}
 	}
 
 	/**
@@ -420,6 +450,14 @@ public class UserSelectOverlay extends AbstractComponent {
 				consumeEvent();
 				return;
 			}
+            textFieldPassword.setFocus(true);
+            textFieldPassword.resetConsume();
+            textFieldPassword.mousePressed(button, x, y);
+            textFieldPassword.setFocus(false);
+            if (textFieldPassword.isConsumed()) {
+                consumeEvent();
+                return;
+            }
 		}
 		consumeEvent();
 
@@ -533,14 +571,14 @@ public class UserSelectOverlay extends AbstractComponent {
 		consumeEvent();
 
 		// esc: close overlay or clear text
-		if (key == Input.KEY_ESCAPE) {
-			if (state == State.CREATE_USER && !textField.getText().isEmpty()) {
-				textField.setText("");
-				newUser.setName("");
-			} else
-				listener.close(false);
-			return;
-		}
+//		if (key == Input.KEY_ESCAPE) {
+//			if (state == State.CREATE_USER && !textField.getText().isEmpty()) {
+//				textField.setText("");
+//				newUser.setName("");
+//			} else
+//				listener.close(false);
+//			return;
+//		}
 
 		if (UI.globalKeyPressed(key))
 			return;
@@ -570,10 +608,17 @@ public class UserSelectOverlay extends AbstractComponent {
 
 		// key entry
 		if (state == State.CREATE_USER) {
+            if(textField.isConsumed()){
 			textField.setFocus(true);
 			textField.keyType(c);
 			textField.setFocus(false);
-			newUser.setName(textField.getText());
+			newUser.setName(textField.getText());}
+            else{
+                textFieldPassword.setFocus(true);
+                textFieldPassword.keyType(c);
+                textFieldPassword.setFocus(false);
+				newUser.setPassword(textFieldPassword.getText());
+            }
 			/*
 			if (c > 255 && Character.isLetterOrDigit(c)) {
 				Fonts.loadGlyphs(Fonts.LARGE, c);
@@ -604,12 +649,18 @@ public class UserSelectOverlay extends AbstractComponent {
 	private void createNewUser() {
 		SoundController.playSound(SoundEffect.MENUCLICK);
 		String name = newUser.getName();
+		String password=newUser.getPassword();
 		int icon = newUser.getIconId();
 		if (!UserList.get().isValidUserName(name)) {
 			String error = name.isEmpty() ? "Enter a name for the user." : "You can't use that name.";
 			UI.getNotificationManager().sendBarNotification(error);
 			newUserButton.flash();
-		} else {
+		}else if(!UserList.get().isValidPassword(password)){
+			String error = password.isEmpty() ? "Enter a password for the user." : "You can't use that password.";
+			UI.getNotificationManager().sendBarNotification(error);
+			newUserButton.flash();
+		}
+		else {
 			if (UserList.get().createNewUser(name, icon) == null)
 				UI.getNotificationManager().sendBarNotification("Something wrong happened.");
 			else {
@@ -651,8 +702,10 @@ public class UserSelectOverlay extends AbstractComponent {
 	/** Prepares the user creation state. */
 	private void prepareUserCreate() {
 		newUser.setName("");
+		newUser.setPassword("");
 		newUser.setIconId(UserList.DEFAULT_ICON);
 		textField.setText("");
+        textFieldPassword.setText("");
 		newUserButton.resetHover();
 		for (int i = 0; i < newUserIcons.length; i++)
 			newUserIcons[i].resetHover();
