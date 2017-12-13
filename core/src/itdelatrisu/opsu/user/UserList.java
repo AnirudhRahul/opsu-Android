@@ -18,14 +18,14 @@
 
 package itdelatrisu.opsu.user;
 
-import itdelatrisu.opsu.OpsuConstants;
-import itdelatrisu.opsu.db.ScoreDB;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import itdelatrisu.opsu.OpsuConstants;
+import itdelatrisu.opsu.db.ScoreDB;
 
 /**
  * List of users.
@@ -117,9 +117,6 @@ public class UserList {
 	 * @return the new User, or null if it could not be created (e.g. name exists)
 	 */
 	public User createNewUser(String name, int icon) {
-		if (!isValidUserName(name))
-			return null;
-
 		User user = new User(name, icon);
 		ScoreDB.updateUser(user);
 		users.put(name.toLowerCase(), user);
@@ -132,4 +129,8 @@ public class UserList {
 		       name.equals(name.trim()) && !userExists(name) &&
 		       !name.equalsIgnoreCase(AUTO_USER_NAME);
 	}
+	public boolean isValidPassword(String password) {
+		return !password.isEmpty() && password.length() <= MAX_USER_NAME_LENGTH;
+	}
+
 }
