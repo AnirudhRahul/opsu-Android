@@ -63,7 +63,7 @@ public class UserList {
 		// get all users
 		List<User> list = ScoreDB.getUsers();
 		for (User user : list)
-			users.put(user.getName().toLowerCase(), user);
+			users.put(user.getName(), user);
 
 		if (list.isEmpty()) {
 			// create the default user
@@ -91,10 +91,10 @@ public class UserList {
 	public User getCurrentUser() { return currentUser; }
 
 	/** Returns whether the given user exists. */
-	public boolean userExists(String name) { return name != null && users.containsKey(name.toLowerCase()); }
+	public boolean userExists(String name) { return name != null && users.containsKey(name); }
 
 	/** Returns the user associated with the name, or null if none. */
-	public User getUser(String name) { return users.get(name.toLowerCase()); }
+	public User getUser(String name) { return users.get(name); }
 
 	/**
 	 * Changes the current user.
@@ -119,10 +119,16 @@ public class UserList {
 	public User createNewUser(String name, int icon) {
 		User user = new User(name, icon);
 		ScoreDB.updateUser(user);
-		users.put(name.toLowerCase(), user);
+		users.put(name, user);
 		return user;
 	}
-
+	public User createNewUser(String name, String password) {
+		User user = new User(name, 0);
+		user.setPassword(password);
+		ScoreDB.updateUser(user);
+		users.put(name, user);
+		return user;
+	}
 	/** Returns whether the given name is a valid user name. */
 	public boolean isValidUserName(String name) {
 		return !name.isEmpty() && name.length() <= MAX_USER_NAME_LENGTH &&

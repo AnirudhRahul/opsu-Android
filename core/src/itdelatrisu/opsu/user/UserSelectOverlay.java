@@ -17,9 +17,12 @@
  */
 
 package itdelatrisu.opsu.user;
+import com.badlogic.gdx.utils.async.AsyncTask;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import fluddokt.ex.DynamoDB;
 import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.GameContainer;
 import fluddokt.opsu.fake.Graphics;
@@ -661,17 +664,46 @@ public class UserSelectOverlay extends AbstractComponent {
 			newUserButton.flash();
 		}
 		else {
-			if (UserList.get().createNewUser(name, icon) == null)
-				UI.getNotificationManager().sendBarNotification("Something wrong happened.");
-			else {
-				// change user
-				UserList.get().changeUser(name);
-				UI.getNotificationManager().sendNotification("New user created.\nEnjoy the game! :)", Colors.GREEN);
-				listener.close(true);
+
+				AsyncTask t=new loginTask();
+				try {
+					t.call();
+				} catch (Exception e) {
+					UI.getNotificationManager().sendNotification("Error in Async", Colors.GREEN);
+
+
 			}
 		}
 	}
-
+private class loginTask implements AsyncTask<Integer> {
+	@Override
+	public Integer call() throws Exception {
+		UserList.get().getUsers().clear();
+        String username = newUser.getName();
+        String password=newUser.getPassword();
+		boolean[] out=new boolean[2];
+		out[0]= DynamoDB.database.dataBaseContainsUsername(username);
+		out[1]=DynamoDB.database.dataBaseContainsUsernameAndPassword(username,password);
+		if(out[0]==true&&out[1]==true) {
+			UI.getNotificationManager().sendNotification("Logged in", Colors.GREEN);
+			UserList.get().createNewUser(username, password);
+			UserList.get().changeUser(username);
+		}
+		if(out[0]==true&&out[1]==false) {
+			UI.getNotificationManager().sendNotification("Wrong Password(Username " + username + " already in use)", Colors.GREEN);
+			newUser.setName("");
+			newUser.setPassword("");
+		}
+		if(out[0]==false) {
+			UserList.get().createNewUser(username, password);
+			UserList.get().createNewUser(username, password);
+			DynamoDB.database.addUserToDataBase(username,password);
+            UI.getNotificationManager().sendNotification("Account Created", Colors.GREEN);
+		}
+		listener.close(true);
+		return 0 ;
+	}
+}
 	/** Prepares the user selection state. */
 	private void prepareUserSelect() {
 		selectedButton = null;

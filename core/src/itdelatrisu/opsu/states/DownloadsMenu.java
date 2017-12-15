@@ -936,7 +936,7 @@ int bgIndex=-1;
 			return;
 
 		switch (key) {
-		case Input.KEY_ESCAPE:
+		case Input.ANDROID_BACK:
 			if (importThread != null) {
 				// beatmap importing: stop parsing beatmaps by sending interrupt to BeatmapParser
 				importThread.interrupt();
