@@ -17,22 +17,24 @@
  */
 
 package itdelatrisu.opsu;
-import fluddokt.opsu.fake.*;
-import itdelatrisu.opsu.options.Options;
-
-import itdelatrisu.opsu.GameData.Grade;
-import itdelatrisu.opsu.states.SongMenu;
-import itdelatrisu.opsu.ui.Colors;
-import itdelatrisu.opsu.ui.Fonts;
-import itdelatrisu.opsu.ui.UI;
-import itdelatrisu.opsu.ui.animations.AnimationEquation;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import fluddokt.opsu.fake.Color;
+import fluddokt.opsu.fake.Graphics;
+import fluddokt.opsu.fake.Image;
+import fluddokt.opsu.fake.Long2;
+import itdelatrisu.opsu.GameData.Grade;
+import itdelatrisu.opsu.options.Options;
+import itdelatrisu.opsu.states.SongMenu;
+import itdelatrisu.opsu.ui.Colors;
+import itdelatrisu.opsu.ui.Fonts;
+import itdelatrisu.opsu.ui.UI;
+import itdelatrisu.opsu.ui.animations.AnimationEquation;
 
 /*
 import org.newdawn.slick.Color;
@@ -207,7 +209,7 @@ public class ScoreData implements Comparable<ScoreData> {
 	 * Returns the raw score percentage based on score data.
 	 * @see GameData#getScorePercent(int, int, int, int)
 	 */
-	private float getScorePercent() {
+	public float getScorePercent() {
 		if (scorePercent < 0f)
 			scorePercent = GameData.getScorePercent(hit300, hit100, hit50, miss);
 		return scorePercent;

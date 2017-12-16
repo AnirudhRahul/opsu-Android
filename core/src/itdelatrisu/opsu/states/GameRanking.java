@@ -18,13 +18,29 @@
 
 package itdelatrisu.opsu.states;
 
-import fluddokt.opsu.fake.*;
-import fluddokt.newdawn.slick.state.transition.*;
+import com.badlogic.gdx.utils.async.AsyncTask;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import fluddokt.ex.DynamoDB;
+import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
+import fluddokt.newdawn.slick.state.transition.FadeInTransition;
+import fluddokt.opsu.fake.BasicGameState;
+import fluddokt.opsu.fake.Color;
+import fluddokt.opsu.fake.Display;
+import fluddokt.opsu.fake.GameContainer;
+import fluddokt.opsu.fake.Graphics;
+import fluddokt.opsu.fake.Image;
+import fluddokt.opsu.fake.Input;
+import fluddokt.opsu.fake.Log;
+import fluddokt.opsu.fake.SlickException;
+import fluddokt.opsu.fake.StateBasedGame;
 import itdelatrisu.opsu.GameData;
 import itdelatrisu.opsu.GameImage;
 import itdelatrisu.opsu.GameMod;
 import itdelatrisu.opsu.Opsu;
+import itdelatrisu.opsu.ScoreData;
 import itdelatrisu.opsu.audio.MusicController;
 import itdelatrisu.opsu.audio.SoundController;
 import itdelatrisu.opsu.audio.SoundEffect;
@@ -35,9 +51,6 @@ import itdelatrisu.opsu.ui.MenuButton;
 import itdelatrisu.opsu.ui.UI;
 import itdelatrisu.opsu.ui.animations.AnimatedValue;
 import itdelatrisu.opsu.ui.animations.AnimationEquation;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 /*
 import org.lwjgl.opengl.Display;
@@ -67,7 +80,7 @@ public class GameRanking extends BasicGameState {
 	private GameData data;
 
 	/** "Retry" and "Replay" buttons. */
-	private MenuButton retryButton, replayButton;
+	private MenuButton retryButton, replayButton, leaderBoardButton;
 
 	/** Button coordinates. */
 	private float retryY, replayY;
@@ -82,7 +95,7 @@ public class GameRanking extends BasicGameState {
 	private StateBasedGame game;
 	private final int state;
 	private Input input;
-
+	private ScoreData scoreData;
 	public GameRanking(int state) {
 		this.state = state;
 	}
@@ -99,12 +112,15 @@ public class GameRanking extends BasicGameState {
 		// buttons
 		Image retry = GameImage.PAUSE_RETRY.getImage();
 		Image replay = GameImage.PAUSE_REPLAY.getImage();
+		Image leaderboard = GameImage.LEADERBOARD.getImage();
 		replayY = (height * 0.985f) - replay.getHeight() / 2f;
 		retryY = replayY - (replay.getHeight() / 2f) - (retry.getHeight() / 1.975f);
 		retryButton = new MenuButton(retry, width - (retry.getWidth() / 2f), retryY);
 		replayButton = new MenuButton(replay, width - (replay.getWidth() / 2f), replayY);
+		leaderBoardButton = new MenuButton(leaderboard, width - (leaderboard.getWidth())/2f-replay.getWidth()+width*0.05f, replayY-0.07f*height);
 		retryButton.setHoverFade();
 		replayButton.setHoverFade();
+		leaderBoardButton.setHoverFade();
 	}
 
 	@Override
@@ -115,6 +131,7 @@ public class GameRanking extends BasicGameState {
 		int mouseX = input.getMouseX(), mouseY = input.getMouseY();
 
 		Beatmap beatmap = MusicController.getBeatmap();
+		scoreData=data.getScoreData(beatmap);
 
 		// background
 		float parallaxX = 0, parallaxY = 0;
@@ -138,11 +155,11 @@ public class GameRanking extends BasicGameState {
 
 		// ranking screen elements
 		data.drawRankingElements(g, beatmap, animationProgress.getTime());
-
 		// buttons
 		replayButton.draw();
 		if (data.isGameplay() && !GameMod.AUTO.isActive())
 			retryButton.draw();
+		leaderBoardButton.draw();
 		UI.getBackButton().draw(g);
 
 		UI.draw(g);
@@ -199,6 +216,9 @@ public class GameRanking extends BasicGameState {
 		Game gameState = (Game) game.getState(Opsu.STATE_GAME);
 		boolean returnToGame = false;
 		boolean replayButtonPressed = replayButton.contains(x, y);
+		boolean retryButtonPressed = replayButton.contains(x, y);
+		boolean leaderButtonPressed = leaderBoardButton.contains(x, y);
+
 		if (replayButtonPressed && !(data.isGameplay() && GameMod.AUTO.isActive())) {
 			if (replay != null) {
 				gameState.setReplay(replay);
@@ -210,11 +230,22 @@ public class GameRanking extends BasicGameState {
 
 		// retry
 		else if (data.isGameplay() &&
-		         (!GameMod.AUTO.isActive() && retryButton.contains(x, y)) ||
+		         (!GameMod.AUTO.isActive() && retryButtonPressed) ||
 		         (GameMod.AUTO.isActive() && replayButtonPressed)) {
 			gameState.setReplay(null);
 			gameState.setPlayState(Game.PlayState.RETRY);
 			returnToGame = true;
+		}
+		else if (data.isGameplay() && !GameMod.AUTO.isActive() && leaderButtonPressed) {
+			UI.getNotificationManager().sendNotification(scoreData.replayString);
+			AsyncTask t=new leaderboard();
+			try {
+				t.call();
+			} catch (Exception e) {
+				UI.getNotificationManager().sendNotification("Error sending score");
+				e.printStackTrace();
+			}
+			returnToGame = false;
 		}
 
 		if (returnToGame) {
@@ -228,7 +259,14 @@ public class GameRanking extends BasicGameState {
 		// otherwise, finish the animation
 		animationProgress.setTime(animationProgress.getDuration());
 	}
-
+	private class leaderboard implements AsyncTask<Integer> {
+		@Override
+		public Integer call() throws Exception {
+			DynamoDB.database.addBeatmapScore(scoreData.timestamp,scoreData.MID,scoreData.MSID,scoreData.title,scoreData.creator,scoreData.version,scoreData.hit300,scoreData.hit100,scoreData.hit50,scoreData.geki,scoreData.katu,scoreData.miss,scoreData.score,scoreData.combo,scoreData.perfect,scoreData.mods,scoreData.playerName);
+			UI.getNotificationManager().sendNotification("Score sent");
+			return 0 ;
+		}
+	}
 	@Override
 	public void enter(GameContainer container, StateBasedGame game)
 			throws SlickException {

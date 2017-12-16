@@ -88,7 +88,7 @@ public enum GameImage {
 	HITCIRCLE_SELECT ("hitcircleselect", "png"),
 	UNRANKED ("play-unranked", "png"),
 	FOLLOWPOINT ("followpoint", "png"),
-
+	LEADERBOARD("postToLeaderboard","png"),
 	// Game Pause/Fail
 	PAUSE_CONTINUE ("pause-continue", "png"),
 	PAUSE_RETRY ("pause-retry", "png"),

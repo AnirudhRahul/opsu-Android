@@ -31,6 +31,7 @@ import fluddokt.opsu.fake.SlickException;
 import fluddokt.opsu.fake.TextField;
 import fluddokt.opsu.fake.gui.AbstractComponent;
 import fluddokt.opsu.fake.gui.GUIContext;
+import itdelatrisu.opsu.ErrorHandler;
 import itdelatrisu.opsu.audio.SoundController;
 import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.options.Options;
@@ -358,8 +359,8 @@ public class UserSelectOverlay extends AbstractComponent {
 		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(passwordHeader)) / 2, cy, passwordHeader, COLOR_WHITE);
 		cy += Fonts.MEDIUMBOLD.getLineHeight();
 		textColor=COLOR_WHITE;
-		if (!UserList.get().isValidPassword(password))
-			textColor = COLOR_RED;
+
+		searchTextX = (int) (x + (width - textWidthPassword) / 2);
         textFieldPassword.setBound((int) x, cy, width, Fonts.LARGE.getLineHeight());
         Fonts.LARGE.drawString(searchTextX, cy, password, textColor);
         cy += Fonts.LARGE.getLineHeight();
@@ -669,8 +670,8 @@ public class UserSelectOverlay extends AbstractComponent {
 				try {
 					t.call();
 				} catch (Exception e) {
-					UI.getNotificationManager().sendNotification("Error in Async", Colors.GREEN);
-
+					UI.getNotificationManager().sendNotification("Database Contact Error", Colors.GREEN);
+					ErrorHandler.error(e.getMessage(),e,false);
 
 			}
 		}

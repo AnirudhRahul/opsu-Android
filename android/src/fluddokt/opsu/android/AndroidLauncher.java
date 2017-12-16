@@ -22,8 +22,13 @@ import fluddokt.ex.DynamoDB;
 import fluddokt.opsu.fake.File;
 import fluddokt.opsu.fake.GameOpsu;
 
+import static android.R.attr.manageSpaceActivity;
+import static android.R.attr.password;
+
 
 public class AndroidLauncher extends AndroidApplication {
+	final String identityPool="";
+
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -54,54 +59,51 @@ public class AndroidLauncher extends AndroidApplication {
 
 		};
 		DynamoDB.database = new DynamoDB(){
-
+			private CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+					getApplicationContext(),
+					identityPool, // Identity pool ID
+					Regions.US_EAST_1 // Region
+			);
 			@Override
 			public boolean dataBaseContainsUsername(String username) {
-				CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-						getApplicationContext(),
-						"", // Identity pool ID
-						Regions.US_EAST_1 // Region
-				);
+
 				AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 				final DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
-				User_database userTofind=new User_database();
+				UserDB userTofind=new UserDB();
 				userTofind.setUsername(username);
 				DynamoDBQueryExpression query=new DynamoDBQueryExpression().withHashKeyValues(userTofind);
-				PaginatedQueryList<User_database> result = mapper.query(User_database.class, query);
+				PaginatedQueryList<UserDB> result = mapper.query(UserDB.class, query);
 				return (result.size()!=0);
 			}
 			@Override
 			public boolean dataBaseContainsUsernameAndPassword(String username, String password) {
-				CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-						getApplicationContext(),
-						"", // Identity pool ID
-						Regions.US_EAST_1 // Region
-				);
 				AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 				final DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
-				User_database userTofind=new User_database();
+				UserDB userTofind=new UserDB();
 				userTofind.setUsername(username);
 				DynamoDBQueryExpression query=new DynamoDBQueryExpression().withHashKeyValues(userTofind);
-				PaginatedQueryList<User_database> result = mapper.query(User_database.class, query);
+				PaginatedQueryList<UserDB> result = mapper.query(UserDB.class, query);
 				if(result.size()!=0){
 					return result.get(0).retrieveRawPassword().equals(sha256(password));
 				}
 				else
 					return false;
 			}
-
 			@Override
-			public void addUserToDataBase(String username, String password){
-				CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-						getApplicationContext(),
-						"", // Identity pool ID
-						Regions.US_EAST_1 // Region
-				);
+			public void addBeatmapScore(long timestamp, int MID, int MSID, String title, String creator, String version, int hit300, int hit100, int hit50, int geki, int katu, int miss, long score, int combo, boolean perfect, int mods, String username){
 				AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 				final DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-				User_database userToAdd=new User_database();
+				BeatmapDB bmp=new BeatmapDB();
+				bmp.setTimestamp(timestamp);bmp.setMID(MID);bmp.setMSID(MSID);bmp.setTitle(title);bmp.setCreator(creator);bmp.setVersion(version);bmp.setHit300(hit300);bmp.setHit100(hit100);bmp.setHit50(hit50);bmp.setGeki(geki);bmp.setKatu(katu);bmp.setMiss(miss);bmp.setScore(score);bmp.setCombo(combo);bmp.setPerfect(perfect);bmp.setMods(mods);bmp.setUsername(username);
+				mapper.save(bmp);
+			}
+			@Override
+			public void addUserToDataBase(String username, String password){
+				AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+				final DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+				UserDB userToAdd=new UserDB();
 				userToAdd.setUsername(username);
 				userToAdd.setPassword(password);
 				mapper.save(userToAdd);

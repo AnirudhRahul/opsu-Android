@@ -42,6 +42,8 @@ public class UserList {
 
 	/** The maximum length of a user name. */
 	public static final int MAX_USER_NAME_LENGTH = 16;
+	public static final int MAX_PASSWORD_LENGTH = 32;
+
 
 	/** The single class instance. */
 	private static UserList list;
@@ -136,7 +138,7 @@ public class UserList {
 		       !name.equalsIgnoreCase(AUTO_USER_NAME);
 	}
 	public boolean isValidPassword(String password) {
-		return !password.isEmpty() && password.length() <= MAX_USER_NAME_LENGTH;
+		return !password.isEmpty() && password.length() <= MAX_PASSWORD_LENGTH&&!password.contains("*");
 	}
 
 }
