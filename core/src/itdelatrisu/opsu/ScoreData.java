@@ -17,6 +17,7 @@
  */
 
 package itdelatrisu.opsu;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.NumberFormat;
@@ -24,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import fluddokt.ex.BeatmapDynamoDB;
 import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.Graphics;
 import fluddokt.opsu.fake.Image;
@@ -96,6 +98,8 @@ public class ScoreData implements Comparable<ScoreData> {
 
 	/** The container width. */
 	private static int containerWidth;
+
+
 
 	/**
 	 * Initializes the base coordinates for drawing.
@@ -196,6 +200,25 @@ public class ScoreData implements Comparable<ScoreData> {
 		this.playerName = rs.getString(19);
 	}
 
+	public ScoreData(BeatmapDynamoDB a){
+		this.MID = a.getMID();
+		this.MSID = a.getMSID();
+		this.title = a.getTitle();
+		this.artist = a.getArtist();
+		this.creator = a.getCreator();
+		this.version = a.getVersion();
+		this.hit300 = a.getHit300();
+		this.hit100 = a.getHit100();
+		this.hit50 = a.getHit50();
+		this.geki = a.getGeki();
+		this.katu = a.getKatu();
+		this.miss = a.getMiss();
+		this.score = a.getScore();
+		this.combo = a.getCombo();
+		this.perfect = a.isPerfect();
+		this.mods = a.getMods();
+		this.playerName = a.getUsername();
+	}
 	/**
 	 * Returns the timestamp as a string.
 	 */
@@ -281,12 +304,11 @@ public class ScoreData implements Comparable<ScoreData> {
 		rectColor.a = oldRectAlpha;
 
 		// rank
-		if (focus) {
 			Fonts.LARGE.drawString(
 				rankX, y + (buttonHeight - Fonts.LARGE.getLineHeight()) / 2f,
-				Integer.toString(rank + 1), c
+				Integer.toString(rank + 1), Colors.PINK_BUTTON
 			);
-		}
+
 
 		// grade image
 		float gradeX = rankX + Fonts.LARGE.getWidth("###");

@@ -51,6 +51,7 @@ import itdelatrisu.opsu.ui.MenuButton;
 import itdelatrisu.opsu.ui.UI;
 import itdelatrisu.opsu.ui.animations.AnimatedValue;
 import itdelatrisu.opsu.ui.animations.AnimationEquation;
+import itdelatrisu.opsu.user.UserList;
 
 /*
 import org.lwjgl.opengl.Display;
@@ -236,8 +237,7 @@ public class GameRanking extends BasicGameState {
 			gameState.setPlayState(Game.PlayState.RETRY);
 			returnToGame = true;
 		}
-		else if (data.isGameplay() && !GameMod.AUTO.isActive() && leaderButtonPressed) {
-			UI.getNotificationManager().sendNotification(scoreData.replayString);
+		else if (!GameMod.AUTO.isActive() && leaderButtonPressed && !UserList.get().getCurrentUser().getName().equals("Guest") && scoreData.playerName.equals(UserList.get().getCurrentUser().getName())) {
 			AsyncTask t=new leaderboard();
 			try {
 				t.call();
@@ -246,6 +246,10 @@ public class GameRanking extends BasicGameState {
 				e.printStackTrace();
 			}
 			returnToGame = false;
+		}
+		else if (data.isGameplay() && !GameMod.AUTO.isActive() && leaderButtonPressed && UserList.get().getCurrentUser().getName().equals("Guest")) {
+			UI.getNotificationManager().sendNotification("Can't submit scores as a guest");
+
 		}
 
 		if (returnToGame) {
@@ -262,7 +266,7 @@ public class GameRanking extends BasicGameState {
 	private class leaderboard implements AsyncTask<Integer> {
 		@Override
 		public Integer call() throws Exception {
-			DynamoDB.database.addBeatmapScore(scoreData.timestamp,scoreData.MID,scoreData.MSID,scoreData.title,scoreData.creator,scoreData.version,scoreData.hit300,scoreData.hit100,scoreData.hit50,scoreData.geki,scoreData.katu,scoreData.miss,scoreData.score,scoreData.combo,scoreData.perfect,scoreData.mods,scoreData.playerName);
+			DynamoDB.database.addBeatmapScore(scoreData.timestamp,scoreData.MID,scoreData.MSID,scoreData.title,scoreData.creator,scoreData.artist,scoreData.version,scoreData.hit300,scoreData.hit100,scoreData.hit50,scoreData.geki,scoreData.katu,scoreData.miss,scoreData.score,scoreData.combo,scoreData.perfect,scoreData.mods,scoreData.playerName);
 			UI.getNotificationManager().sendNotification("Score sent");
 			return 0 ;
 		}

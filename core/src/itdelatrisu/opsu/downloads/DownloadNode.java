@@ -384,10 +384,10 @@ public class DownloadNode {
 		g.setColor((focus) ? Colors.BLACK_BG_FOCUS : (hover) ? Colors.BLACK_BG_HOVER : Colors.BLACK_BG_NORMAL);
 		g.fillRect(buttonBaseX, y, buttonWidth, buttonHeight);
 
-		if(hash.length()!=0){
-			g.setColor(Colors.ORANGE_BUTTON);
-			g.fillRect(buttonBaseX, y, buttonWidth, buttonHeight);
-		}
+//		if(hash.length()!=0){
+//			g.setColor(Colors.ORANGE_BUTTON);
+//			g.fillRect(buttonBaseX, y, buttonWidth, buttonHeight);
+//		}
 		// map is already loaded
 		if (BeatmapSetList.get().containsBeatmapSetID(beatmapSetID)) {
 			g.setColor(Colors.BLUE_BUTTON);
