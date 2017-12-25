@@ -9,6 +9,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import itdelatrisu.opsu.ScoreData;
 
@@ -23,15 +24,15 @@ public class DynamoDB {
         return null;
     }
 
-        public boolean dataBaseContainsUsername(String username) {
-            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(retrieveCredentials());
-            final DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-            UserDB userTofind=new UserDB();
-            userTofind.setUsername(username);
-            DynamoDBQueryExpression query=new DynamoDBQueryExpression().withHashKeyValues(userTofind);
-            PaginatedQueryList<UserDB> result = mapper.query(UserDB.class, query);
-            return (result.size()!=0);
-        }
+    public boolean dataBaseContainsUsername(String username) {
+        AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(retrieveCredentials());
+        final DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+        UserDB userTofind=new UserDB();
+        userTofind.setUsername(username);
+        DynamoDBQueryExpression query=new DynamoDBQueryExpression().withHashKeyValues(userTofind);
+        PaginatedQueryList<UserDB> result = mapper.query(UserDB.class, query);
+        return (result.size()!=0);
+    }
 
     public boolean dataBaseContainsUsernameAndPassword(String username, String password) {
         AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(retrieveCredentials());
@@ -69,7 +70,7 @@ public class DynamoDB {
         BeatmapDynamoDB beatmapToFind=new BeatmapDynamoDB();
         beatmapToFind.setMID(hashkey);
         DynamoDBQueryExpression query=new DynamoDBQueryExpression().withHashKeyValues(beatmapToFind).withScanIndexForward(false);
-        query.setLimit(100);
+
         PaginatedQueryList<BeatmapDynamoDB> result = mapper.query(BeatmapDynamoDB.class, query);
 
         return result;
@@ -82,6 +83,22 @@ public class DynamoDB {
             i++;
         }
         return list;
+    }
+    public ScoreData[] createScoreData(PaginatedQueryList<BeatmapDynamoDB> queryList, String username) throws SQLException {
+        ArrayList<ScoreData> list=new ArrayList<>(queryList.size());
+        int i=0;
+        for(BeatmapDynamoDB e: queryList){
+            if(e.getUsername().equals(username)) {
+                ScoreData temp=new ScoreData(e);
+                temp.rank=i;
+                list.add(temp);
+            }
+            i++;
+        }
+        ScoreData[] array=new ScoreData[list.size()];
+        for(int k=0;k<array.length;k++)
+            array[k]=list.get(k);
+        return array;
     }
     private String sha256(String a){
         MessageDigest digest = null;

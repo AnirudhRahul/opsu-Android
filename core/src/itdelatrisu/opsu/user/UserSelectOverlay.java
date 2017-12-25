@@ -17,6 +17,7 @@
  */
 
 package itdelatrisu.opsu.user;
+import com.badlogic.gdx.utils.async.AsyncExecutor;
 import com.badlogic.gdx.utils.async.AsyncTask;
 
 import java.util.ArrayList;
@@ -31,7 +32,6 @@ import fluddokt.opsu.fake.SlickException;
 import fluddokt.opsu.fake.TextField;
 import fluddokt.opsu.fake.gui.AbstractComponent;
 import fluddokt.opsu.fake.gui.GUIContext;
-import itdelatrisu.opsu.ErrorHandler;
 import itdelatrisu.opsu.audio.SoundController;
 import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.options.Options;
@@ -665,15 +665,9 @@ public class UserSelectOverlay extends AbstractComponent {
 			newUserButton.flash();
 		}
 		else {
-
-				AsyncTask t=new loginTask();
-				try {
-					t.call();
-				} catch (Exception e) {
-					UI.getNotificationManager().sendNotification("Database Contact Error", Colors.GREEN);
-					ErrorHandler.error(e.getMessage(),e,false);
-
-			}
+			AsyncExecutor executor=new AsyncExecutor(1);
+			AsyncTask t=new loginTask();
+			executor.submit(t);
 		}
 	}
 private class loginTask implements AsyncTask<Integer> {
@@ -697,9 +691,9 @@ private class loginTask implements AsyncTask<Integer> {
 		}
 		if(out[0]==false) {
 			UserList.get().createNewUser(username, password);
-			UserList.get().createNewUser(username, password);
 			DynamoDB.database.addUserToDataBase(username,password);
-            UI.getNotificationManager().sendNotification("Account Created", Colors.GREEN);
+            UserList.get().changeUser(username);
+			UI.getNotificationManager().sendNotification("Account Created", Colors.GREEN);
 		}
 		listener.close(true);
 		return 0 ;

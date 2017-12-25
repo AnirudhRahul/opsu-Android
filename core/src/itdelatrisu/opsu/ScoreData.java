@@ -66,6 +66,9 @@ public class ScoreData implements Comparable<ScoreData> {
 	/** The max combo. */
 	public int combo;
 
+	//Rank on global leaderboard
+	public int rank=-1;
+
 	/** Whether or not a full combo was achieved. */
 	public boolean perfect;
 
@@ -135,7 +138,7 @@ public class ScoreData implements Comparable<ScoreData> {
 	public static boolean buttonContains(float cx, float cy, int index) {
 		float y = baseY + (index * buttonOffset);
 		return ((cx >= 0 && cx < baseX + buttonWidth) &&
-		        (cy > y && cy < y + buttonHeight));
+				(cy > y && cy < y + buttonHeight));
 	}
 
 	/**
@@ -146,7 +149,7 @@ public class ScoreData implements Comparable<ScoreData> {
 	 */
 	public static boolean areaContains(float cx, float cy) {
 		return ((cx >= 0 && cx < baseX + buttonWidth) &&
-		        (cy > baseY && cy < baseY + buttonOffset * SongMenu.MAX_SCORE_BUTTONS));
+				(cy > baseY && cy < baseY + buttonOffset * SongMenu.MAX_SCORE_BUTTONS));
 	}
 
 	/**
@@ -304,10 +307,10 @@ public class ScoreData implements Comparable<ScoreData> {
 		rectColor.a = oldRectAlpha;
 
 		// rank
-			Fonts.LARGE.drawString(
+		Fonts.LARGE.drawString(
 				rankX, y + (buttonHeight - Fonts.LARGE.getLineHeight()) / 2f,
 				Integer.toString(rank + 1), Colors.PINK_BUTTON
-			);
+		);
 
 
 		// grade image
@@ -326,8 +329,8 @@ public class ScoreData implements Comparable<ScoreData> {
 
 		// score
 		Fonts.MEDIUM.drawString(
-			textX, y + textOffset,
-			String.format("Score: %s (%dx)", NumberFormat.getNumberInstance().format(score), combo), c
+				textX, y + textOffset,
+				String.format("Score: %s (%dx)", NumberFormat.getNumberInstance().format(score), combo), c
 		);
 
 		// mods
@@ -350,7 +353,7 @@ public class ScoreData implements Comparable<ScoreData> {
 
 		// score difference
 		String diff = (prevScore < 0 || score < prevScore) ?
-			"-" : String.format("+%s", NumberFormat.getNumberInstance().format(score - prevScore));
+				"-" : String.format("+%s", NumberFormat.getNumberInstance().format(score - prevScore));
 		Fonts.DEFAULT.drawString(edgeX - Fonts.DEFAULT.getWidth(diff), y + marginY + Fonts.DEFAULT.getLineHeight() * 2, diff, c);
 
 		// time since
@@ -358,9 +361,9 @@ public class ScoreData implements Comparable<ScoreData> {
 			Image clock = GameImage.HISTORY.getImage();
 			clock.drawCentered(x + buttonWidth * 1.02f + clock.getWidth() / 2f, midY);
 			Fonts.DEFAULT.drawString(
-				x + buttonWidth * 1.03f + clock.getWidth(),
-				midY - Fonts.DEFAULT.getLineHeight() / 2f,
-				getTimeSince(), c
+					x + buttonWidth * 1.03f + clock.getWidth(),
+					midY - Fonts.DEFAULT.getLineHeight() / 2f,
+					getTimeSince(), c
 			);
 		}
 
@@ -415,14 +418,14 @@ public class ScoreData implements Comparable<ScoreData> {
 
 		// score
 		Fonts.DEFAULT.drawString(
-			xPaddingLeft, yPos + rectHeight - Fonts.DEFAULT.getLineHeight() - yPadding, scoreString, white
+				xPaddingLeft, yPos + rectHeight - Fonts.DEFAULT.getLineHeight() - yPadding, scoreString, white
 		);
 
 		// combo
 		Fonts.DEFAULT.drawString(
-			rectWidth - Fonts.DEFAULT.getWidth(comboString) - xPaddingRight,
-			yPos + rectHeight - Fonts.DEFAULT.getLineHeight() - yPadding,
-			comboString, blue
+				rectWidth - Fonts.DEFAULT.getWidth(comboString) - xPaddingRight,
+				yPos + rectHeight - Fonts.DEFAULT.getLineHeight() - yPadding,
+				comboString, blue
 		);
 
 		white.a = oldAlphaWhite;
@@ -454,10 +457,10 @@ public class ScoreData implements Comparable<ScoreData> {
 	@Override
 	public String toString() {
 		return String.format(
-			"%s | ID: (%d, %d) | %s - %s [%s] (by %s) | " +
-			"Hits: (%d, %d, %d, %d, %d, %d) | Score: %d (%d combo%s) | Mods: %s",
-			getTimeString(), MID, MSID, artist, title, version, creator,
-			hit300, hit100, hit50, geki, katu, miss, score, combo, perfect ? ", FC" : "", GameMod.getModString(mods)
+				"%s | ID: (%d, %d) | %s - %s [%s] (by %s) | " +
+						"Hits: (%d, %d, %d, %d, %d, %d) | Score: %d (%d combo%s) | Mods: %s",
+				getTimeString(), MID, MSID, artist, title, version, creator,
+				hit300, hit100, hit50, geki, katu, miss, score, combo, perfect ? ", FC" : "", GameMod.getModString(mods)
 		);
 	}
 
