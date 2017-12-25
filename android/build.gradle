@@ -4,20 +4,20 @@ android {
     compileSdkVersion 20
     sourceSets {
         main {
-            manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src']
             aidl.srcDirs = ['src']
+            manifest.srcFile 'AndroidManifest.xml'
             renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
             assets.srcDirs = ['assets']
             jniLibs.srcDir 'libs'
-
         }
 
         instrumentTest.setRoot('tests')
     }
     defaultConfig {
         versionCode 5
+        minSdkVersion 14
     }
     productFlavors {
     }
@@ -130,5 +130,4 @@ dependencies {
     compile 'com.amazonaws:aws-android-sdk-ddb:2.2.+'
     compile 'com.amazonaws:aws-android-sdk-ddb:2.2.+'
     compile 'com.amazonaws:aws-android-sdk-ddb-mapper:2.2.+'
-
 }
