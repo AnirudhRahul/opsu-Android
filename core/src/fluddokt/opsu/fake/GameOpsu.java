@@ -1,5 +1,16 @@
 package fluddokt.opsu.fake;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,17 +22,6 @@ import itdelatrisu.opsu.ErrorHandler;
 import itdelatrisu.opsu.GameImage;
 import itdelatrisu.opsu.Opsu;
 import itdelatrisu.opsu.options.Options;
-
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class GameOpsu extends com.badlogic.gdx.Game {
 
@@ -271,12 +271,12 @@ public class GameOpsu extends com.badlogic.gdx.Game {
 			}
 			
 		}.button("Ignore and Continue","S").button("Report on github","R").button("Close Opsu", "CloseOpsu");
-		dialog.getContentTable().row();
+
 		Label tex =new Label(string+"\n"+bodyString, skin);
 		
 		dialog.getContentTable().add(new ScrollPane(tex))
 			.width(Gdx.graphics.getWidth())
-			.height(Gdx.graphics.getHeight()-60);
+			.height(Gdx.graphics.getHeight());
 		dialog.pack();
 		table.addActor(dialog);
 		
