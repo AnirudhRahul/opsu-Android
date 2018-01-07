@@ -23,7 +23,7 @@ import com.badlogic.gdx.utils.async.AsyncTask;
 import java.util.ArrayList;
 import java.util.List;
 
-import fluddokt.ex.DynamoDB;
+import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.GameContainer;
 import fluddokt.opsu.fake.Graphics;

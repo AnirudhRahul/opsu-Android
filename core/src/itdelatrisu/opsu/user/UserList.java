@@ -26,6 +26,7 @@ import java.util.Map;
 
 import itdelatrisu.opsu.OpsuConstants;
 import itdelatrisu.opsu.db.ScoreDB;
+import itdelatrisu.opsu.ui.UI;
 
 /**
  * List of users.
@@ -125,11 +126,31 @@ public class UserList {
 		return user;
 	}
 	public User createNewUser(String name, String password) {
-		User user = new User(name, 0);
+		User user = new User(name, Integer.MAX_VALUE);
 		user.setPassword(password);
 		ScoreDB.updateUser(user);
+
 		users.put(name, user);
 		return user;
+	}
+	public void removeInvalidUsers(){
+		ArrayList<String> removeList=new ArrayList<>();
+		for(User e:ScoreDB.getUsers()){
+				if(!e.getName().equals("Guest")&&e.getIconId()!=Integer.MAX_VALUE)
+					removeList.add(e.getName());
+		}
+		for(String e:removeList)
+			ScoreDB.deleteUser(e);
+		users.clear();
+		for(User e:ScoreDB.getUsers())
+			users.put(e.getName(),e);
+		if(getUsers().size()==0){
+			getUsers().add(new User("Guest",0));
+			users.put("Guest",new User("Guest",0));
+			UI.getNotificationManager().sendNotification("Guest was deleted !");
+		}
+		if(!users.containsKey(getCurrentUser().getName()))
+			changeUser(getUsers().get(0).getName());
 	}
 	/** Returns whether the given name is a valid user name. */
 	public boolean isValidUserName(String name) {

@@ -32,7 +32,6 @@ import fluddokt.opsu.fake.Log;
 import itdelatrisu.opsu.ErrorHandler;
 import itdelatrisu.opsu.Utils;
 import itdelatrisu.opsu.downloads.DownloadNode;
-import itdelatrisu.opsu.ui.UI;
 /*
 import org.newdawn.slick.util.Log;
 */
@@ -100,7 +99,6 @@ public class HexideServer extends DownloadServer {
 				this.totalResults = -1;
 				return null;
 			}
-			UI.getNotificationManager().sendNotification(search);
 			// parse result list
 			nodes = new DownloadNode[Math.min(arr.length(), PAGE_LIMIT)];
 			for (int i = 0; i < nodes.length && i < PAGE_LIMIT; i++) {

@@ -18,12 +18,12 @@
 
 package itdelatrisu.opsu.states;
 
-import com.badlogic.gdx.utils.async.AsyncTask;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
-import fluddokt.ex.DynamoDB;
+import fluddokt.ex.DynamoDB.DynamoDB;
+import fluddokt.ex.InterstitialAdLoader;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.FadeInTransition;
 import fluddokt.opsu.fake.BasicGameState;
@@ -217,9 +217,16 @@ public class GameRanking extends BasicGameState {
 		Game gameState = (Game) game.getState(Opsu.STATE_GAME);
 		boolean returnToGame = false;
 		boolean replayButtonPressed = replayButton.contains(x, y);
-		boolean retryButtonPressed = replayButton.contains(x, y);
+		boolean retryButtonPressed = retryButton.contains(x, y);
 		boolean leaderButtonPressed = leaderBoardButton.contains(x, y);
 
+		float gameSettings= Options.getFixedAR()+
+				Options.getFixedCS()+
+				Options.getFixedHP()+
+				Options.getFixedOD()+
+				Options.getFixedSpeed();
+		if(scoreData.settings==-1)
+		scoreData.settings=gameSettings;
 		if (replayButtonPressed && !(data.isGameplay() && GameMod.AUTO.isActive())) {
 			if (replay != null) {
 				gameState.setReplay(replay);
@@ -228,7 +235,6 @@ public class GameRanking extends BasicGameState {
 			} else
 				UI.getNotificationManager().sendBarNotification("Replay file not found.");
 		}
-
 		// retry
 		else if (data.isGameplay() &&
 		         (!GameMod.AUTO.isActive() && retryButtonPressed) ||
@@ -237,20 +243,17 @@ public class GameRanking extends BasicGameState {
 			gameState.setPlayState(Game.PlayState.RETRY);
 			returnToGame = true;
 		}
-		else if (!GameMod.AUTO.isActive() && leaderButtonPressed && !UserList.get().getCurrentUser().getName().equals("Guest") && scoreData.playerName.equals(UserList.get().getCurrentUser().getName())) {
-			AsyncTask t=new leaderboard();
-			try {
-				t.call();
-			} catch (Exception e) {
-				UI.getNotificationManager().sendNotification("Error sending score");
-				e.printStackTrace();
-			}
+		else if (!GameMod.AUTO.isActive() && leaderButtonPressed && !UserList.get().getCurrentUser().getName().equals("Guest") && scoreData.playerName.equals(UserList.get().getCurrentUser().getName())&&scoreData.settings==0) {
+			InterstitialAdLoader.ad.onShowCompleted(new leaderboard());
+			InterstitialAdLoader.ad.loadAndShow();
 			returnToGame = false;
 		}
-		else if (data.isGameplay() && !GameMod.AUTO.isActive() && leaderButtonPressed && UserList.get().getCurrentUser().getName().equals("Guest")) {
+		if (data.isGameplay() && !GameMod.AUTO.isActive() && leaderButtonPressed && UserList.get().getCurrentUser().getName().equals("Guest")) {
 			UI.getNotificationManager().sendNotification("Can't submit scores as a guest");
-
 		}
+		if(data.isGameplay() && !GameMod.AUTO.isActive() && leaderButtonPressed&& scoreData.settings!=0)
+			UI.getNotificationManager().sendNotification("Can't submit scores without having the default fixed Settings");
+
 
 		if (returnToGame) {
 			Beatmap beatmap = MusicController.getBeatmap();
@@ -263,12 +266,20 @@ public class GameRanking extends BasicGameState {
 		// otherwise, finish the animation
 		animationProgress.setTime(animationProgress.getDuration());
 	}
-	private class leaderboard implements AsyncTask<Integer> {
+//	private class leaderboard implements AsyncTask<Integer> {
+//		@Override
+//		public Integer call() throws Exception {
+//			DynamoDB.database.addBeatmapScore(scoreData.timestamp,scoreData.MID,scoreData.MSID,scoreData.title,scoreData.creator,scoreData.artist,scoreData.version,scoreData.hit300,scoreData.hit100,scoreData.hit50,scoreData.geki,scoreData.katu,scoreData.miss,scoreData.score,scoreData.combo,scoreData.perfect,scoreData.mods,scoreData.playerName);
+//			UI.getNotificationManager().sendNotification("Score sent");
+//			return 0 ;
+//		}
+//	}
+	private class leaderboard implements Callable<Boolean> {
 		@Override
-		public Integer call() throws Exception {
+		public Boolean call(){
 			DynamoDB.database.addBeatmapScore(scoreData.timestamp,scoreData.MID,scoreData.MSID,scoreData.title,scoreData.creator,scoreData.artist,scoreData.version,scoreData.hit300,scoreData.hit100,scoreData.hit50,scoreData.geki,scoreData.katu,scoreData.miss,scoreData.score,scoreData.combo,scoreData.perfect,scoreData.mods,scoreData.playerName);
 			UI.getNotificationManager().sendNotification("Score sent");
-			return 0 ;
+			return true;
 		}
 	}
 	@Override

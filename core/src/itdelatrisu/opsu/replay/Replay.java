@@ -331,9 +331,13 @@ public class Replay {
 					// LZMA-encoded replay data
 					if (frames != null && frames.length > 0) {
 						// build full frame string
-						NumberFormat nf = new DecimalFormat("###.#####"
-							,DecimalFormatSymbols.getInstance(Locale.forLanguageTag("en_US"))
-						);
+						NumberFormat nf;
+						try{
+							nf = new DecimalFormat("###.#####",DecimalFormatSymbols.getInstance(Locale.forLanguageTag("en_US")));
+						}catch (Exception e){
+							nf = new DecimalFormat("###.#####");
+						}
+
 						sb = new StringBuilder();
 						for (int i = 0; i < frames.length; i++) {
 							ReplayFrame frame = frames[i];

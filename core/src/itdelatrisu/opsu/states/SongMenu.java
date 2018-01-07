@@ -30,7 +30,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import fluddokt.ex.DynamoDB;
+import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.FadeInTransition;
 import fluddokt.opsu.fake.Animation;
@@ -470,8 +470,10 @@ public class SongMenu extends BasicGameState {
 		leaderboardMenu = new DropdownMenu<String>(container, leaderboardModes, 0, 0, (int) (width * 0.12f)) {
 			@Override
 			public void itemSelected(int index, String item) {
-				//Todo make sure it resets properly
+				//makes sure it resets properly
 				updateScoreMap();
+				focusScores = getScoreDataForNode(focusNode, true);
+				startScorePos.setPosition(0);
 				return;
 			}
 
@@ -1926,11 +1928,15 @@ public class SongMenu extends BasicGameState {
 	private Map<String, ScoreData[]> execute(Callable<Map<String, ScoreData[]>> c){
 		Future<Map<String, ScoreData[]>> task = asyncExecutor.submit(c);
 		try {
-			return task.get(1, TimeUnit.SECONDS);
+			return task.get(1500, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			//ErrorHandler.error("Connection error",e,true);
 			UI.getNotificationManager().sendNotification("Connection failed");
 			task.cancel(true);
 			leaderboardMenu.setSelectedIndex(0);
+			updateScoreMap();
+			focusScores = getScoreDataForNode(focusNode, true);
+			startScorePos.setPosition(0);
 			return null;
 		}
 
@@ -1957,7 +1963,6 @@ public class SongMenu extends BasicGameState {
 	public HashMap<String, ScoreData[]> getScoreMapfromDB(Beatmap set) throws SQLException {
 		HashMap<String, ScoreData[]> map=new HashMap<>();
 		map.put(set.version, DynamoDB.database.createScoreData(DynamoDB.database.getBeatmapScore(set.beatmapID)));
-
 		return map;
 	}
 	public HashMap<String, ScoreData[]> getScoreMapfromDB(Beatmap set, String username) throws SQLException {

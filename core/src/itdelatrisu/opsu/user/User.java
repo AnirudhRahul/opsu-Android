@@ -26,7 +26,7 @@ public class User implements Comparable<User> {
 	private String name;
 
 	//User's password
-	private String password;
+	private String password="";
 
 	/** Total score. */
 	private long score;
@@ -87,6 +87,8 @@ public class User implements Comparable<User> {
 		this.playsTotal++;
 		calculateLevel();
 	}
+
+
 
 	/**
 	 * Adds stats from a play (failed).

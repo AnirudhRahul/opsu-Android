@@ -25,7 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import fluddokt.ex.BeatmapDynamoDB;
+import fluddokt.ex.DynamoDB.BeatmapDynamoDB;
 import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.Graphics;
 import fluddokt.opsu.fake.Image;
@@ -74,6 +74,9 @@ public class ScoreData implements Comparable<ScoreData> {
 
 	/** Game mod bitmask. */
 	public int mods;
+
+	//Sum of all the fixed settings Used. to make sure that they are not in use when sending the score the leaderboards
+	public float settings=-1;
 
 	/** The replay string. */
 	public String replayString;
