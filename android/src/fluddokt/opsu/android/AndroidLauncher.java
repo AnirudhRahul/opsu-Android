@@ -1,12 +1,16 @@
 package fluddokt.opsu.android;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
@@ -17,11 +21,7 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.reward.RewardItem;
-import com.google.android.gms.ads.reward.RewardedVideoAd;
-import com.google.android.gms.ads.reward.RewardedVideoAdListener;
 
-import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,11 +31,8 @@ import java.util.concurrent.TimeUnit;
 import fluddokt.ex.DeviceInfo;
 import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.ex.InterstitialAdLoader;
-import fluddokt.ex.RewardVideoAdLoader;
 import fluddokt.opsu.fake.File;
 import fluddokt.opsu.fake.GameOpsu;
-
-import static android.R.attr.x;
 
 public class AndroidLauncher extends AndroidApplication {
 	final String identityPool="us-east-1:db541cf4-1b41-4045-b60f-adeaa6b9cfeb";
@@ -54,6 +51,10 @@ public class AndroidLauncher extends AndroidApplication {
 		executorService= Executors.newSingleThreadExecutor();
 		prefs= PreferenceManager.getDefaultSharedPreferences(this);
 		editor=prefs.edit();
+		AlarmManager a= (AlarmManager) getSystemService(ALARM_SERVICE);
+		Intent intent=new Intent(getApplicationContext(),AlarmReceiver.class);
+		PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		a.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis()+100,AlarmManager.INTERVAL_HOUR,alarmIntent);
 		DeviceInfo.info = new DeviceInfo() {
 			@Override
 			public String getInfo() {
@@ -75,16 +76,13 @@ public class AndroidLauncher extends AndroidApplication {
 				return new File(String.valueOf(new FileHandle(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))));
 			}
 			@Override
-			public String getAndroidVersion(){
-				double release=Double.parseDouble(Build.VERSION.RELEASE.replaceAll("(\\d+[.]\\d+)(.*)","$1"));
-				String codeName="Unsupported";//below Jelly bean OR above Oreo
-				if(release>=4.1 && release<4.4)codeName="Jelly Bean";
-				else if(release<5)codeName="Kit Kat";
-				else if(release<6)codeName="Lollipop";
-				else if(release<7)codeName="Marshmallow";
-				else if(release<8)codeName="Nougat";
-				else if(release<9)codeName="Oreo";
-				return codeName+" v"+release+", API Level: "+Build.VERSION.SDK_INT;
+			public boolean isMusicPlaying(){
+				AudioManager a=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
+				return a.isMusicActive();
+			}
+			@Override
+			public void saveName(String name){
+				editor.putString("CurrentName",name).apply();
 			}
 
 		};
@@ -265,6 +263,26 @@ public class AndroidLauncher extends AndroidApplication {
 		initialize(new GameOpsu(), config);
 
 	}
+	@Override
+	protected void onStart(){
+		super.onStart();
+		updateLastUsedTimer();
+	}
+	@Override
+	protected void  onResume(){
+		super.onResume();
+		updateLastUsedTimer();
+	}
+	@Override
+	protected void onPause(){
+		super.onPause();
+		updateLastUsedTimer();
+	}
+	@Override
+	protected void onStop(){
+		super.onStop();
+		updateLastUsedTimer();
+	}
 	//Execute a callable with a 1.5s time limit
 	private boolean execute(Callable<Boolean> c){
 		Future<Boolean> task = executorService.submit(c);
@@ -274,41 +292,9 @@ public class AndroidLauncher extends AndroidApplication {
 			return false;
 		}
 	}
-//	private void resetVideo(){
-//		mRewardedVideoAd.setRewardedVideoAdListener(new RewardedVideoAdListener() {
-//			@Override
-//			public void onRewardedVideoAdLoaded() {}
-//			@Override
-//			public void onRewardedVideoAdOpened() {}
-//			@Override
-//			public void onRewardedVideoStarted() {}
-//			@Override
-//			public void onRewardedVideoAdClosed() {}
-//			@Override
-//			public void onRewarded(RewardItem rewardItem) {editor.putLong("lastAd", new Date().getTime());}
-//			@Override
-//			public void onRewardedVideoAdLeftApplication() {}
-//			@Override
-//			public void onRewardedVideoAdFailedToLoad(int i) {RewardVideoAdLoader.ad.sendNotification("Connection Failed");}
-//		});
-//	}
-//	private void showVideoWhenLoaded(){
-//		mRewardedVideoAd.setRewardedVideoAdListener(new RewardedVideoAdListener() {
-//			@Override
-//			public void onRewardedVideoAdLoaded() {mRewardedVideoAd.show();}
-//			@Override
-//			public void onRewardedVideoAdOpened() {}
-//			@Override
-//			public void onRewardedVideoStarted() {}
-//			@Override
-//			public void onRewardedVideoAdClosed() {}
-//			@Override
-//			public void onRewarded(RewardItem rewardItem) {editor.putLong("lastAd", new Date().getTime());}
-//			@Override
-//			public void onRewardedVideoAdLeftApplication() {}
-//			@Override
-//			public void onRewardedVideoAdFailedToLoad(int i) {RewardVideoAdLoader.ad.sendNotification("Connection Failed");}
-//		});
-//	}
+
+	public void updateLastUsedTimer(){
+		editor.putLong("LastTimeUsed",System.currentTimeMillis()).apply();
+	}
 
 }

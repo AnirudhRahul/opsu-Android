@@ -10,4 +10,6 @@ public class DeviceInfo {
 	public File getDownloadDir() {
 		return null;
 	}
+	public boolean isMusicPlaying(){return false;}
+	public void saveName(String name){}
 }
