@@ -25,7 +25,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Stack;
 
-import fluddokt.ex.DeviceInfo;
 import fluddokt.ex.InterstitialAdLoader;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.FadeInTransition;
@@ -644,7 +643,6 @@ public class MainMenu extends BasicGameState {
 			throws SlickException {
 		InterstitialAdLoader.ad.load();
 		UserList.get().removeInvalidUsers();
-		DeviceInfo.info.saveName(UserList.get().getCurrentUser().getName());
 		float t = com.badlogic.gdx.Gdx.graphics.getWidth()/com.badlogic.gdx.Gdx.graphics.getPpiX();
 		System.out.println("screen size = "+t);
 		UI.enter();

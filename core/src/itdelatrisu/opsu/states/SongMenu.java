@@ -1467,6 +1467,7 @@ public class SongMenu extends BasicGameState {
 	public void enter(GameContainer container, StateBasedGame game)
 			throws SlickException {
 		UI.enter();
+
 		Display.setTitle(game.getTitle());
 		selectModsButton.resetHover();
 		selectRandomButton.resetHover();
@@ -1927,8 +1928,19 @@ public class SongMenu extends BasicGameState {
 
 	private Map<String, ScoreData[]> execute(Callable<Map<String, ScoreData[]>> c){
 		Future<Map<String, ScoreData[]>> task = asyncExecutor.submit(c);
+		if(focusNode.getSelectedBeatmap().beatmapID==0){
+			leaderboardMenu.setSelectedIndex(0);
+			updateScoreMap();
+			focusScores = getScoreDataForNode(focusNode, true);
+			startScorePos.setPosition(0);
+			UI.getNotificationManager().sendNotification("Leaderboard not available for this map");
+
+		}
+		else
 		try {
+
 			return task.get(1500, TimeUnit.MILLISECONDS);
+
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
 			//ErrorHandler.error("Connection error",e,true);
 			UI.getNotificationManager().sendNotification("Connection failed");

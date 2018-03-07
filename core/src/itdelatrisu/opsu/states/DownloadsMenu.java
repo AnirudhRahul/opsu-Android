@@ -58,8 +58,6 @@ import itdelatrisu.opsu.downloads.DownloadNode;
 import itdelatrisu.opsu.downloads.servers.BloodcatServer;
 import itdelatrisu.opsu.downloads.servers.DownloadServer;
 import itdelatrisu.opsu.downloads.servers.HexideServer;
-import itdelatrisu.opsu.downloads.servers.MnetworkServer;
-import itdelatrisu.opsu.downloads.servers.OsuMirrorServer;
 import itdelatrisu.opsu.downloads.servers.YaSOnlineServer;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.ui.Colors;
@@ -109,12 +107,10 @@ public class DownloadsMenu extends BasicGameState {
 	private static final int MIN_REQUEST_INTERVAL = 300;
 
 	/** Available beatmap download servers. */
-	private static final DownloadServer[] SERVERS = {new OsuMirrorServer(),
-		new MnetworkServer(),
+	private static final DownloadServer[] SERVERS = {
 		new HexideServer(),
 		new BloodcatServer(),
-		new YaSOnlineServer(),
-
+		new YaSOnlineServer()
 	};
 
 	/** The current list of search results. */

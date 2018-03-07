@@ -11,5 +11,4 @@ public class DeviceInfo {
 		return null;
 	}
 	public boolean isMusicPlaying(){return false;}
-	public void saveName(String name){}
 }

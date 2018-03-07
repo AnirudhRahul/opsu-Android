@@ -1,16 +1,12 @@
 package fluddokt.opsu.android;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
@@ -21,6 +17,7 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
+import com.onesignal.OneSignal;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -33,6 +30,7 @@ import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.ex.InterstitialAdLoader;
 import fluddokt.opsu.fake.File;
 import fluddokt.opsu.fake.GameOpsu;
+import com.onesignal.OneSignal;
 
 public class AndroidLauncher extends AndroidApplication {
 	final String identityPool="us-east-1:db541cf4-1b41-4045-b60f-adeaa6b9cfeb";
@@ -48,13 +46,17 @@ public class AndroidLauncher extends AndroidApplication {
 		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
 		config.useImmersiveMode = true;
 		config.useWakelock = true;
+		OneSignal.startInit(this)
+				.inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
+				.unsubscribeWhenNotificationsAreDisabled(true)
+				.init();
 		executorService= Executors.newSingleThreadExecutor();
 		prefs= PreferenceManager.getDefaultSharedPreferences(this);
 		editor=prefs.edit();
-		AlarmManager a= (AlarmManager) getSystemService(ALARM_SERVICE);
-		Intent intent=new Intent(getApplicationContext(),AlarmReceiver.class);
-		PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		a.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis()+100,AlarmManager.INTERVAL_HOUR,alarmIntent);
+		OneSignal.startInit(this)
+				.inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
+				.unsubscribeWhenNotificationsAreDisabled(true)
+				.init();
 		DeviceInfo.info = new DeviceInfo() {
 			@Override
 			public String getInfo() {
@@ -75,14 +77,12 @@ public class AndroidLauncher extends AndroidApplication {
 
 				return new File(String.valueOf(new FileHandle(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))));
 			}
+
+
 			@Override
 			public boolean isMusicPlaying(){
 				AudioManager a=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
 				return a.isMusicActive();
-			}
-			@Override
-			public void saveName(String name){
-				editor.putString("CurrentName",name).apply();
 			}
 
 		};
@@ -261,27 +261,6 @@ public class AndroidLauncher extends AndroidApplication {
 //		};
 
 		initialize(new GameOpsu(), config);
-
-	}
-	@Override
-	protected void onStart(){
-		super.onStart();
-		updateLastUsedTimer();
-	}
-	@Override
-	protected void  onResume(){
-		super.onResume();
-		updateLastUsedTimer();
-	}
-	@Override
-	protected void onPause(){
-		super.onPause();
-		updateLastUsedTimer();
-	}
-	@Override
-	protected void onStop(){
-		super.onStop();
-		updateLastUsedTimer();
 	}
 	//Execute a callable with a 1.5s time limit
 	private boolean execute(Callable<Boolean> c){
@@ -292,9 +271,14 @@ public class AndroidLauncher extends AndroidApplication {
 			return false;
 		}
 	}
-
-	public void updateLastUsedTimer(){
-		editor.putLong("LastTimeUsed",System.currentTimeMillis()).apply();
+	@Override
+	protected void onRestart(){
+		super.onRestart();
+//		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
+//		config.useImmersiveMode = true;
+//		config.useWakelock = true;
+//		initialize(new GameOpsu(), config);
 	}
+
 
 }
