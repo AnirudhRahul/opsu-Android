@@ -1934,7 +1934,7 @@ public class SongMenu extends BasicGameState {
 			focusScores = getScoreDataForNode(focusNode, true);
 			startScorePos.setPosition(0);
 			UI.getNotificationManager().sendNotification("Leaderboard not available for this map");
-
+			return null;
 		}
 		else
 		try {
