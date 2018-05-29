@@ -1405,7 +1405,7 @@ public class Options {
 	 * @return the left key code
 	 */
 	public static int getGameKeyLeft() {
-		if (keyLeft == Keyboard.KEY_NONE)
+		if (keyLeft == Keyboard.KEY_NONE || keyLeft<0)
 			setGameKeyLeft(Input.KEY_Z);
 		return keyLeft;
 	}
@@ -1415,7 +1415,7 @@ public class Options {
 	 * @return the right key code
 	 */
 	public static int getGameKeyRight() {
-		if (keyRight == Keyboard.KEY_NONE)
+		if (keyRight == Keyboard.KEY_NONE || keyRight<0)
 			setGameKeyRight(Input.KEY_X);
 		return keyRight;
 	}
@@ -1454,7 +1454,7 @@ public class Options {
 	 * @return {@code true} if valid, {@code false} otherwise
 	 */
 	private static boolean isValidGameKey(int key) {
-		return (key != Keyboard.KEY_ESCAPE && key != Keyboard.KEY_SPACE &&
+		return (key>=0 && key != Keyboard.KEY_ESCAPE && key != Keyboard.KEY_SPACE &&
 		        key != Keyboard.KEY_UP && key != Keyboard.KEY_DOWN &&
 		        key != Keyboard.KEY_F7 && key != Keyboard.KEY_F10 && key != Keyboard.KEY_F12);
 	}
