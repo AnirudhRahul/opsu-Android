@@ -21,6 +21,7 @@ package itdelatrisu.opsu.beatmap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import fluddokt.opsu.fake.Log;
 import itdelatrisu.opsu.db.BeatmapDB;
@@ -111,7 +112,7 @@ public class BeatmapDifficultyCalculator {
 	 */
 	public void calculate() {
 		if (beatmap.objects == null || beatmap.timingPoints == null) {
-			Log.error(String.format("Trying to calculate difficulty values for beatmap '%s' with %s not yet loaded.",
+			Log.error(String.format(Locale.US,"Trying to calculate difficulty values for beatmap '%s' with %s not yet loaded.",
 					beatmap.toString(), (beatmap.objects == null) ? "hit objects" : "timing points"));
 			return;
 		}

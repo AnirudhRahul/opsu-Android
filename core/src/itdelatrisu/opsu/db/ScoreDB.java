@@ -17,17 +17,7 @@
  */
 
 package itdelatrisu.opsu.db;
-import fluddokt.opsu.fake.Log;
-import itdelatrisu.opsu.Utils;
 import java.io.IOException;
-
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.ScoreData;
-import itdelatrisu.opsu.beatmap.Beatmap;
-import itdelatrisu.opsu.options.Options;
-import itdelatrisu.opsu.user.User;
-import itdelatrisu.opsu.user.UserList;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,7 +29,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.ScoreData;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.beatmap.Beatmap;
+import itdelatrisu.opsu.options.Options;
+import itdelatrisu.opsu.user.User;
+import itdelatrisu.opsu.user.UserList;
 
 /**
  * Handles connections and queries with the scores database.
@@ -178,7 +178,7 @@ public class ScoreDB {
 			} 
 
 			// set the version key, if empty
-			sql = String.format("INSERT OR IGNORE INTO info(key, value) VALUES('version', %d)", DATABASE_VERSION);
+			sql = String.format(Locale.US,"INSERT OR IGNORE INTO info(key, value) VALUES('version', %d)", DATABASE_VERSION);
 			stmt.execute(sql);
 		}
 	}

@@ -1,7 +1,5 @@
 package fluddokt.opsu.fake;
 
-import java.util.LinkedList;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -14,6 +12,8 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
+
+import java.util.LinkedList;
 
 public class Graphics {
 
@@ -56,7 +56,9 @@ public class Graphics {
 	}
 
 	public void setBackground(Color ncolor) {
+//		clearAlphaMap();
 		bgcolor = ncolor;
+		bgcolor = new Color(1,1,1,0f);
 	}
 
 	public void setFont(UnicodeFont nfont) {
@@ -250,11 +252,12 @@ public class Graphics {
 
 	public void clearAlphaMap() {
 		// TODO Auto-generated method stub
-		//Gdx.gl.glColorMask(false, false, false, true);
-		//fillRect(0, 0, width, height);
-		//Gdx.gl.glColorMask(true, true, true, true);
-		
-		//clear();
+		Gdx.gl.glClearColor(0, 0, 0, 0);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+//		clear();
+
+//		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
 	}
 	
 	protected void bind(){

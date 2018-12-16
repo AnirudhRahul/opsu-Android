@@ -1,3 +1,0 @@
-version=${version}
-file=https://github.com/itdelatrisu/opsu/releases/download/${version}/opsu-${version}.jar
-build.date=${timestamp}

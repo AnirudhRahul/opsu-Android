@@ -18,10 +18,9 @@
 
 package itdelatrisu.opsu.downloads.servers;
 
-import fluddokt.opsu.fake.Log;
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.Utils;
-import itdelatrisu.opsu.downloads.DownloadNode;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -33,11 +32,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.TimeZone;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.downloads.DownloadNode;
 /*
 import org.newdawn.slick.util.Log;
 */
@@ -80,7 +81,7 @@ public class OsuMirrorServer extends DownloadServer {
 
 	@Override
 	public String getDownloadURL(int beatmapSetID) {
-		return (idTable.containsKey(beatmapSetID)) ? String.format(DOWNLOAD_URL, idTable.get(beatmapSetID)) : null;
+		return (idTable.containsKey(beatmapSetID)) ? String.format(Locale.US,DOWNLOAD_URL, idTable.get(beatmapSetID)) : null;
 	}
 
 	@Override
@@ -93,10 +94,10 @@ public class OsuMirrorServer extends DownloadServer {
 			boolean isSearch;
 			if (query.isEmpty()) {
 				isSearch = false;
-				search = String.format(HOME_URL, page);
+				search = String.format(Locale.US,HOME_URL, page);
 			} else {
 				isSearch = true;
-				search = String.format(SEARCH_URL, page, URLEncoder.encode(query, "UTF-8"));
+				search = String.format(Locale.US,SEARCH_URL, page, URLEncoder.encode(query, "UTF-8"));
 			}
 			JSONObject json = Utils.readJsonObjectFromUrl(new URL(search));
 			if (json == null || json.getInt("code") != 0) {

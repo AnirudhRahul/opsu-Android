@@ -45,9 +45,9 @@ public class OptionGroup {
 		}),
 		*/
 		new OptionGroup("Graphics", GameImage.MENU_NAV_GRAPHICS),
-		new OptionGroup("LAYOUT", new GameOption[] {
-				(com.badlogic.gdx.Gdx.app.getType() == ApplicationType.Desktop) ? 
-						GameOption.SCREEN_RESOLUTION : GameOption.NULL,
+		new OptionGroup("Video", new GameOption[] {
+				GameOption.ENABLE_VIDEOS,
+				GameOption.VIDEO_BRIGHTNESS
 				
 			//GameOption.FULLSCREEN,
 		}),
@@ -58,7 +58,6 @@ public class OptionGroup {
 		}),
 		new OptionGroup("DETAIL SETTINGS", new GameOption[] {
 			GameOption.SNAKING_SLIDERS,
-			//GameOption.ENABLE_VIDEOS,
 			GameOption.SHOW_COMBO_BURSTS,
 			GameOption.SHOW_HIT_LIGHTING,
 			GameOption.SHOW_PERFECT_HIT,
@@ -136,6 +135,7 @@ public class OptionGroup {
 			GameOption.SLIDER_QUALITY,
 			GameOption.SCOREBOARD,
 			GameOption.DISABLE_SPINNER_UI,
+			GameOption.SYNC_USER_INFO,
 		}),
 	};
 

@@ -11,7 +11,10 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import itdelatrisu.opsu.ErrorHandler;
 import itdelatrisu.opsu.ScoreData;
+import itdelatrisu.opsu.ui.UI;
+import itdelatrisu.opsu.user.User;
 
 /**
  * Created by user on 12/10/2017.
@@ -53,19 +56,49 @@ public class DynamoDB {
         //Note we only check the first index because our database doesn't have duplicate usernames
         if(result.size()!=0){
             //The result returned is already hashed so to make sure we don't hash it twice we use rawPassword
-            return result.get(0).retrieveRawPassword().equals(sha256(password));
+            return result.get(0).getPassword().equals(sha256(password));
         }
         else
             return false;
     }
     //Adds a user to the database
-    public void addUserToDataBase(String username, String password){
+    public void addUserToDataBase(User user){
         AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(retrieveCredentials());
         final DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
         UserDB userToAdd=new UserDB();
-        userToAdd.setUsername(username);
-        userToAdd.setPassword(password);
+        //Add all 9 user attributes
+        userToAdd.setUsername(user.getName());
+        //Checks is the hashed password field exists and is valid
+        if(user.getHashedPassword()!=null&&user.getHashedPassword().length()==64)
+            userToAdd.setPassword(user.getHashedPassword());
+        else
+            userToAdd.setPassword(sha256(user.getPassword()));
+
+        userToAdd.setPlaysTotal(user.getTotalPlays());
+        userToAdd.setPlaysPassed(user.getPassedPlays());
+        userToAdd.setAccuracy(user.getAccuracy());
+        userToAdd.setAvailableIcons(user.getAvailableIcons());
+        userToAdd.setScore(user.getScore());
+
         mapper.save(userToAdd);
+    }
+
+
+    public User getUserFromDB(String username){
+        //Search for a user with a specific username
+        AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(retrieveCredentials());
+        final DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+        UserDB userTofind=new UserDB();
+        userTofind.setUsername(username);
+        DynamoDBQueryExpression query=new DynamoDBQueryExpression().withHashKeyValues(userTofind);
+        PaginatedQueryList<UserDB> result = mapper.query(UserDB.class, query);
+        UserDB foundUser=result.get(0);
+        User user=new User(foundUser.getUsername(),foundUser.getScore(),foundUser.getAccuracy(),foundUser.getPlaysPassed(),foundUser.getPlaysTotal(),0);
+
+        user.setHashedPassword(foundUser.getPassword());
+        user.setAvailableIcons(foundUser.getAvailableIcons());
+        return user;
+
     }
     //Adds a score to the database
     public void addBeatmapScore(long timestamp, int MID, int MSID, String title, String creator, String artist, String version, int hit300, int hit100, int hit50, int geki, int katu, int miss, long score, int combo, boolean perfect, int mods, String username){
@@ -79,16 +112,21 @@ public class DynamoDB {
     //Returns all the scores for a specific song
     //Note the hashkey is the MID for the beatmap, which is also the haskey we use for our scores database
     public PaginatedQueryList<BeatmapDynamoDB> getBeatmapScore(int hashkey){
+        try {
         AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(retrieveCredentials());
-        final DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+        DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
         BeatmapDynamoDB beatmapToFind=new BeatmapDynamoDB();
         beatmapToFind.setMID(hashkey);
         //Use ScanIndexForward to sort by the sort key(boolean values makes it ascending or descending order)
         DynamoDBQueryExpression query=new DynamoDBQueryExpression().withHashKeyValues(beatmapToFind).withScanIndexForward(false).withLimit(100);
-
         PaginatedQueryList<BeatmapDynamoDB> result = mapper.query(BeatmapDynamoDB.class, query);
-
         return result;
+        }catch (Exception e){
+            UI.getNotificationManager().sendNotification(e.getMessage());
+            ErrorHandler.error("db retrieval error",e,true);
+        }
+
+        return null;
     }
     //Turns the results of a query into a ScoreData object which is usable locally
     public ScoreData[] createScoreData(PaginatedQueryList<BeatmapDynamoDB> queryList) throws SQLException {

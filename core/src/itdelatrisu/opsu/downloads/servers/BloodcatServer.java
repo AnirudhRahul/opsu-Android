@@ -18,10 +18,9 @@
 
 package itdelatrisu.opsu.downloads.servers;
 
-import fluddokt.opsu.fake.Log;
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.Utils;
-import itdelatrisu.opsu.downloads.DownloadNode;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -32,10 +31,12 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.downloads.DownloadNode;
 
 /*
 import org.newdawn.slick.util.Log;
@@ -70,7 +71,7 @@ public class BloodcatServer extends DownloadServer {
 
 	@Override
 	public String getDownloadURL(int beatmapSetID) {
-		return String.format(DOWNLOAD_URL, beatmapSetID);
+		return String.format(Locale.US,DOWNLOAD_URL, beatmapSetID);
 	}
 
 	@Override
@@ -78,7 +79,7 @@ public class BloodcatServer extends DownloadServer {
 		DownloadNode[] nodes = null;
 		try {
 			// read JSON
-			String search = String.format(SEARCH_URL, URLEncoder.encode(query, "UTF-8"), rankedOnly ? "1" : "", page);
+			String search = String.format(Locale.US,SEARCH_URL, URLEncoder.encode(query, "UTF-8"), rankedOnly ? "1" : "", page);
 			JSONArray arr = Utils.readJsonArrayFromUrl(new URL(search));
 			if (arr == null) {
 				this.totalResults = -1;

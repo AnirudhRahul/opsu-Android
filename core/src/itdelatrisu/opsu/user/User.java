@@ -18,6 +18,13 @@
 
 package itdelatrisu.opsu.user;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
 /**
  * User profile.
  */
@@ -27,6 +34,9 @@ public class User implements Comparable<User> {
 
 	//User's password
 	private String password="";
+
+	//Hashed version of the users password
+	private String hashedPassword="";
 
 	/** Total score. */
 	private long score;
@@ -48,6 +58,9 @@ public class User implements Comparable<User> {
 
 	/** Profile icon identifier. */
 	private int icon;
+
+	/** Lis of available Icons*/
+	private List<Integer> availableIcon;
 
 	/**
 	 * Creates a new user with the given name and icon.
@@ -72,6 +85,9 @@ public class User implements Comparable<User> {
 		this.playsPassed = playsPassed;
 		this.playsTotal = playsTotal;
 		this.icon = icon;
+		this.availableIcon=new ArrayList<>();
+		availableIcon.add(1);
+		availableIcon.add(2);
 		calculateLevel();
 	}
 
@@ -86,6 +102,14 @@ public class User implements Comparable<User> {
 		this.playsPassed++;
 		this.playsTotal++;
 		calculateLevel();
+
+
+//		UserDB userToFind=new UserDB();
+//		userToFind.setUsername(this.name);
+//		userToFind.setAccuracy(accuracy);
+//		userToFind.setScore(score);
+//		userToFind.setPlaysPassed(playsPassed);
+//		userToFind.setPlaysTotal(playsTotal);
 	}
 
 
@@ -102,8 +126,12 @@ public class User implements Comparable<User> {
 
 	/** Returns the user's name. */
 	public String getName() { return name; }
+
 	//Returns the user's password
 	public String getPassword() { return password; }
+
+	//Returns the user's hashed password
+	public String getHashedPassword() { return hashedPassword; }
 
 	/** Returns the user's total score. */
 	public long getScore() { return score; }
@@ -119,6 +147,9 @@ public class User implements Comparable<User> {
 
 	/** Returns the user's icon identifier. */
 	public int getIconId() { return icon; }
+
+	/** Returns the list of possible user icon identifiers. */
+	public List<Integer> getAvailableIcons() { return availableIcon; }
 
 	/** Returns the user's level. */
 	public int getLevel() { return level; }
@@ -141,6 +172,30 @@ public class User implements Comparable<User> {
 		long baseScore = getScoreForLevel(l);
 		this.levelProgress = (double) (this.score - baseScore) / (getScoreForLevel(l + 1) - baseScore);
 	}
+
+	public User mergeUser(User in){
+		long newScore=score+in.score;
+		int newPlaysPassed=playsPassed+in.playsPassed;
+		int newPlaysTotal=playsTotal+in.playsTotal;
+		double newAccuracy=(accuracy*playsTotal+in.accuracy*in.playsTotal)/newPlaysTotal;
+		HashSet<Integer> icons=new HashSet<>();
+		//Add all of the available icons from both users into a set to remove repeats
+		for(int e:in.getAvailableIcons())
+			icons.add(e);
+		for(int e:availableIcon)
+			icons.add(e);
+
+		//Store the values in the set in an list
+		ArrayList<Integer> newAvailableIcons=new ArrayList<>();
+		newAvailableIcons.addAll(icons);
+		Collections.sort(newAvailableIcons);
+
+		User newUser=new User(name,newScore,newAccuracy,newPlaysPassed,newPlaysTotal,0);
+		newUser.calculateLevel();
+		newUser.setAvailableIcons(newAvailableIcons);
+		return newUser;
+	}
+	 public String toString(){return name;}
 
 	/**
 	 * Returns the total score needed for a given level:
@@ -167,13 +222,37 @@ public class User implements Comparable<User> {
 	public void setName(String name) { this.name = name; }
 
 	/** Sets the user's password. */
-	public void setPassword(String password) { this.password = password; }
+	public void setPassword(String password) { this.password = password; hashedPassword=sha256(password);}
+
+	/** Sets the hashed version of the user's password. */
+	public void setHashedPassword(String hashedPassword) { this.hashedPassword = hashedPassword; }
 
 	/** Sets the user's icon identifier. */
 	public void setIconId(int id) { this.icon = id; }
+
+	public void setAvailableIcons(List<Integer> availableIcon) { this.availableIcon = availableIcon; }
 
 	@Override
 	public int compareTo(User other) {
 		return this.getName().compareToIgnoreCase(other.getName());
 	}
+
+	//sha256 implementation
+	public String sha256(String a){
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        byte[] hash = digest.digest(a.getBytes());
+        return bytesToHex(hash);
+    }
+    private static String bytesToHex(byte[] bytes) {
+        StringBuffer result = new StringBuffer();
+        for (byte b : bytes) result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+        return result.toString();
+    }
+
+
 }

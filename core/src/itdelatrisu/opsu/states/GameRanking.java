@@ -21,6 +21,10 @@ package itdelatrisu.opsu.states;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.ex.InterstitialAdLoader;
@@ -92,6 +96,10 @@ public class GameRanking extends BasicGameState {
 	/** The loaded replay, or null if it couldn't be loaded. */
 	private Replay replay = null;
 
+	//Executor Service to send scores to DB
+	private ExecutorService executorService;
+
+
 	// game-related variables
 	private StateBasedGame game;
 	private final int state;
@@ -106,7 +114,7 @@ public class GameRanking extends BasicGameState {
 			throws SlickException {
 		this.game = game;
 		this.input = container.getInput();
-
+		executorService= Executors.newSingleThreadExecutor();
 		int width = container.getWidth();
 		int height = container.getHeight();
 
@@ -121,7 +129,9 @@ public class GameRanking extends BasicGameState {
 		leaderBoardButton = new MenuButton(leaderboard, width - (leaderboard.getWidth())/2f-replay.getWidth()+width*0.05f, replayY-0.07f*height);
 		retryButton.setHoverFade();
 		replayButton.setHoverFade();
-		leaderBoardButton.setHoverFade();
+		leaderBoardButton.setHoverFade(0.7f);
+
+
 	}
 
 	@Override
@@ -132,7 +142,6 @@ public class GameRanking extends BasicGameState {
 		int mouseX = input.getMouseX(), mouseY = input.getMouseY();
 
 		Beatmap beatmap = MusicController.getBeatmap();
-		scoreData=data.getScoreData(beatmap);
 
 		// background
 		float parallaxX = 0, parallaxY = 0;
@@ -141,7 +150,7 @@ public class GameRanking extends BasicGameState {
 			parallaxX = -offset / 2f * (mouseX - width / 2) / (width / 2);
 			parallaxY = -offset / 2f * (mouseY - height / 2) / (height / 2);
 		}
-		if (!beatmap.drawBackground(width, height, parallaxX, parallaxY, 0.5f, true)) {
+		if (!beatmap.drawBackground(width, height, parallaxX, parallaxY, 0.5f, true,g,false)) {
 			Image bg = GameImage.MENU_BG.getImage();
 			if (Options.isParallaxEnabled()) {
 				bg = bg.getScaledCopy(GameImage.PARALLAX_SCALE);
@@ -172,6 +181,7 @@ public class GameRanking extends BasicGameState {
 		UI.update(delta);
 		int mouseX = input.getMouseX(), mouseY = input.getMouseY();
 		replayButton.hoverUpdate(delta, mouseX, mouseY);
+		leaderBoardButton.hoverUpdate(delta, mouseX, mouseY);
 		if (data.isGameplay())
 			retryButton.hoverUpdate(delta, mouseX, mouseY);
 		else
@@ -220,13 +230,7 @@ public class GameRanking extends BasicGameState {
 		boolean retryButtonPressed = retryButton.contains(x, y);
 		boolean leaderButtonPressed = leaderBoardButton.contains(x, y);
 
-		float gameSettings= Options.getFixedAR()+
-				Options.getFixedCS()+
-				Options.getFixedHP()+
-				Options.getFixedOD()+
-				Options.getFixedSpeed();
-		if(scoreData.settings==-1)
-		scoreData.settings=gameSettings;
+
 		if (replayButtonPressed && !(data.isGameplay() && GameMod.AUTO.isActive())) {
 			if (replay != null) {
 				gameState.setReplay(replay);
@@ -244,9 +248,12 @@ public class GameRanking extends BasicGameState {
 			returnToGame = true;
 		}
 		else if (!GameMod.AUTO.isActive() && leaderButtonPressed && !UserList.get().getCurrentUser().getName().equals("Guest") && scoreData.playerName.equals(UserList.get().getCurrentUser().getName())&&scoreData.settings==0) {
-			InterstitialAdLoader.ad.onShowCompleted(new leaderboard());
 			InterstitialAdLoader.ad.loadAndShow();
+			execute(new leaderboard());
 			returnToGame = false;
+		}
+		else if(!GameMod.AUTO.isActive() && leaderButtonPressed && !UserList.get().getCurrentUser().getName().equals("Guest") && !scoreData.playerName.equals(UserList.get().getCurrentUser().getName())&&scoreData.settings==0){
+			UI.getNotificationManager().sendNotification("Can't submit scores from a different account");
 		}
 		if (data.isGameplay() && !GameMod.AUTO.isActive() && leaderButtonPressed && UserList.get().getCurrentUser().getName().equals("Guest")) {
 			UI.getNotificationManager().sendNotification("Can't submit scores as a guest");
@@ -277,8 +284,23 @@ public class GameRanking extends BasicGameState {
 	private class leaderboard implements Callable<Boolean> {
 		@Override
 		public Boolean call(){
-			DynamoDB.database.addBeatmapScore(scoreData.timestamp,scoreData.MID,scoreData.MSID,scoreData.title,scoreData.creator,scoreData.artist,scoreData.version,scoreData.hit300,scoreData.hit100,scoreData.hit50,scoreData.geki,scoreData.katu,scoreData.miss,scoreData.score,scoreData.combo,scoreData.perfect,scoreData.mods,scoreData.playerName);
-			UI.getNotificationManager().sendNotification("Score sent");
+			try {
+				DynamoDB.database.addBeatmapScore(scoreData.timestamp, scoreData.MID, scoreData.MSID, scoreData.title, scoreData.creator, scoreData.artist, scoreData.version, scoreData.hit300, scoreData.hit100, scoreData.hit50, scoreData.geki, scoreData.katu, scoreData.miss, scoreData.score, scoreData.combo, scoreData.perfect, scoreData.mods, scoreData.playerName);
+				UI.getNotificationManager().sendNotification("Score sent");
+			}catch (Exception e){UI.getNotificationManager().sendNotification("Error\n"+e.getMessage());}
+			return true;
+		}
+	}
+
+	private class leaderboardAndUserUpdate implements Callable<Boolean> {
+		@Override
+		public Boolean call(){
+			try {
+				DynamoDB.database.addBeatmapScore(scoreData.timestamp, scoreData.MID, scoreData.MSID, scoreData.title, scoreData.creator, scoreData.artist, scoreData.version, scoreData.hit300, scoreData.hit100, scoreData.hit50, scoreData.geki, scoreData.katu, scoreData.miss, scoreData.score, scoreData.combo, scoreData.perfect, scoreData.mods, scoreData.playerName);
+				UI.getNotificationManager().sendNotification("Score sent");
+				DynamoDB.database.addUserToDataBase(UserList.get().getCurrentUser());
+				UI.getNotificationManager().sendNotification("User Info Synced");
+			}catch (Exception e){UI.getNotificationManager().sendNotification("Error\n"+e.getMessage());}
 			return true;
 		}
 	}
@@ -303,6 +325,32 @@ public class GameRanking extends BasicGameState {
 				animationProgress.setTime(0);
 			}
 		}
+		Beatmap beatmap = MusicController.getBeatmap();
+		scoreData=data.getScoreData(beatmap);
+		float gameSettings= Options.getFixedAR()+
+				Options.getFixedCS()+
+				Options.getFixedHP()+
+				Options.getFixedOD()+
+				Options.getFixedSpeed();
+		if(scoreData.settings==-1)
+			scoreData.settings=gameSettings;
+		if(data.isGameplay()&&Options.GameOption.SYNC_USER_INFO.getBooleanValue()) {
+			boolean isGuest=UserList.get().getCurrentUser().getName().equals("Guest");
+			boolean isCorrectUser=scoreData.playerName.equals(UserList.get().getCurrentUser().getName());
+			boolean fairSettings=scoreData.settings==0;
+			UI.drawLoadingProgress(container.getGraphics(), 1f);
+			InterstitialAdLoader.ad.loadAndShow();
+			if(isGuest)
+				UI.getNotificationManager().sendNotification("Can't submit scores as a guest");
+			else if(!isCorrectUser)
+				UI.getNotificationManager().sendNotification("Can't submit scores from a different account");
+			else if(!fairSettings)
+				UI.getNotificationManager().sendNotification("Can't submit scores without having the default fixed Settings "+scoreData.settings);
+			else
+				execute(new leaderboardAndUserUpdate());
+			InterstitialAdLoader.ad.load();
+		}
+
 		replayButton.resetHover();
 		loadReplay();
 	}
@@ -316,7 +364,14 @@ public class GameRanking extends BasicGameState {
 
 		SoundController.stopSound(SoundEffect.APPLAUSE);
 	}
-
+//	private boolean execute(Callable<Boolean> c){
+//		Future<Boolean> task = executorService.submit(c);
+//		try {
+//			return task.get(1500, TimeUnit.MILLISECONDS);
+//		} catch (Exception e) {
+//			return false;
+//		}
+//	}
 	/**
 	 * Returns to the song menu.
 	 */
@@ -359,4 +414,16 @@ public class GameRanking extends BasicGameState {
 	 * Returns the current GameData object (usually null unless state active).
 	 */
 	public GameData getGameData() { return data; }
+
+
+	private boolean execute(Callable<Boolean> c){
+		Future<Boolean> task = executorService.submit(c);
+		try {
+			return task.get(1000, TimeUnit.MILLISECONDS);
+		} catch (Exception e) {
+			UI.getNotificationManager().sendNotification("Connection timed out");
+			return false;
+		}
+	}
+
 }

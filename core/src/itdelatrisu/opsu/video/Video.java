@@ -17,15 +17,18 @@
  */
 
 package itdelatrisu.opsu.video;
-import fluddokt.opsu.fake.*;
+
 
 import java.io.Closeable;
+import java.io.IOException;
+
+import fluddokt.opsu.fake.File;
+import fluddokt.opsu.fake.Image;
+import fluddokt.opsu.fake.SlickException;
+
 /*
 import java.io.File;
 */
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 
 
 
@@ -45,25 +48,18 @@ import net.indiespot.media.impl.VideoMetadata;
  */
 public class Video implements Closeable {
 	/** The source file. */
-	private final File file;
-
-	/** The video metadata. */
-	/*
-	private final VideoMetadata metadata;
-	/*
+	private File file;
 
 	/** The frame interval. */
-	private final long frameInterval;
+	private long frameInterval;
 
 	/** The current video frame. */
-	/*
-	private final Image image;
-	*/
 
-	/** The video stream. */
-	/*
-	private VideoStream videoStream;
-	*/
+	private Image image;
+
+
+
+
 
 	/** The initial frame time. */
 	private long initFrame;
@@ -98,9 +94,10 @@ public class Video implements Closeable {
 		this.initialized = false;
 		this.closed = false;
 		this.pauseFrame = 0;
-		*/
+
 		this.frameInterval = 0;
 		this.file = null;
+		*/
 	}
 
 	/**
@@ -119,15 +116,15 @@ public class Video implements Closeable {
 	}
 
 	/** Returns a video stream from the given millisecond offset. */
-	/*
-	private VideoStream getVideoStreamAtOffset(int msec) throws IOException {
-		
-		InputStream rgb24Stream = FFmpeg.extractVideoAsRGB24(file, msec);
-		return new VideoStream(rgb24Stream, metadata);
-		
-		return null;
-	}
-	*/
+
+//	private VideoStream getVideoStreamAtOffset(int msec) throws IOException {
+//
+//		InputStream rgb24Stream = FFmpeg.extractVideoAsRGB24(file, msec);
+//		return new VideoStream(rgb24Stream, metadata);
+//
+//		return null;
+//	}
+
 
 	/** Returns whether the video has started playing. */
 	public boolean isStarted() { return initialized; }
@@ -159,10 +156,11 @@ public class Video implements Closeable {
 	 * @param alpha the alpha level to render at
 	 */
 	public void render(int x, int y, int width, int height, float alpha) {
-		/*
+
 		image.setAlpha(alpha);
+		image.setImageColor(1f,0,0,0);
 		image.draw(x, y, width, height);
-		*/
+
 	}
 
 	/** Returns whether the next frame time has passed. */
@@ -191,70 +189,70 @@ public class Video implements Closeable {
 	 * @param syncTime the nanosecond time the video should sync to (forward direction only)
 	 */
 	private void update(long syncTime) {
-		/*
-		if (finished || closed || pauseFrame > 0 || videoStream == null)
-			return;
-
-		// initialize frames
-		if (!initialized) {
-			videoIndex = 0;
-			initFrame = System.nanoTime();
-			if (pauseFrame != 0)
-				pauseFrame = initFrame;
-
-			// change pixel store alignment to prevent distortion
-			GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-			GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
-
-			initialized = true;
-		}
-
-		if (!isTimeForNextFrame(syncTime))
-			return;
-
-		// grab and skip frames (if needed)
-		ByteBuffer texBuffer = null;
-		final int backlog = 5;
-		int framesRead = 0;
-		do {
-			// free extra frames
-			if (framesRead > 0) {
-				videoStream.freeFrameData(texBuffer);
-				texBuffer = null;
-				videoIndex++;
-			}
-
-			// grab next frame
-			texBuffer = videoStream.pollFrameData();
-			if (texBuffer == VideoStream.EOF) {
-				finished = true;
-				return;
-			}
-			if (texBuffer == null)
-				return;
-
-			framesRead++;
-		} while (hasVideoBacklogOver(backlog, syncTime));
-
-		// render to texture
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, image.getTexture().getTextureID());
-		GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, metadata.width, metadata.height, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, texBuffer);
-
-		videoStream.freeFrameData(texBuffer);
-		videoIndex++;
-		*/
+//
+//		if (finished || closed || pauseFrame > 0 || videoStream == null)
+//			return;
+//
+//		// initialize frames
+//		if (!initialized) {
+//			videoIndex = 0;
+//			initFrame = System.nanoTime();
+//			if (pauseFrame != 0)
+//				pauseFrame = initFrame;
+//
+//			// change pixel store alignment to prevent distortion
+//			GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
+//			GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
+//
+//			initialized = true;
+//		}
+//
+//		if (!isTimeForNextFrame(syncTime))
+//			return;
+//
+//		// grab and skip frames (if needed)
+//		ByteBuffer texBuffer = null;
+//		final int backlog = 5;
+//		int framesRead = 0;
+//		do {
+//			// free extra frames
+//			if (framesRead > 0) {
+//				videoStream.freeFrameData(texBuffer);
+//				texBuffer = null;
+//				videoIndex++;
+//			}
+//
+//			// grab next frame
+//			texBuffer = videoStream.pollFrameData();
+//			if (texBuffer == VideoStream.EOF) {
+//				finished = true;
+//				return;
+//			}
+//			if (texBuffer == null)
+//				return;
+//
+//			framesRead++;
+//		} while (hasVideoBacklogOver(backlog, syncTime));
+//
+//		// render to texture
+//		GL11.glBindTexture(GL11.GL_TEXTURE_2D, image.getTexture().getTextureID());
+//		GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, metadata.width, metadata.height, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, texBuffer);
+//
+//		videoStream.freeFrameData(texBuffer);
+//		videoIndex++;
+//
 	}
 
 	@Override
 	public void close() throws IOException {
-		/*
-		if (!closed) {
-			closed = true;
-			videoStream.close();
-			try {
-				image.destroy();
-			} catch (SlickException e) {}
-		}
-		*/
+//
+//		if (!closed) {
+//			closed = true;
+//			videoStream.close();
+//			try {
+//				image.destroy();
+//			} catch (SlickException e) {}
+//		}
+
 	}
 }

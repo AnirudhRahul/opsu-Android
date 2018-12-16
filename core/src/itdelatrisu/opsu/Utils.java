@@ -665,7 +665,7 @@ public class Utils {
 	 * @return true if JAR, false if file
 	 */
 	public static boolean isJarRunning() {
-		return Opsu.class.getResource(String.format("%s.class", Opsu.class.getSimpleName())).toString().startsWith("jar:");
+		return false;
 	}
 
 	/**

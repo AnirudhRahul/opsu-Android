@@ -18,10 +18,7 @@
 
 package itdelatrisu.opsu.downloads.servers;
 
-import fluddokt.opsu.fake.Log;
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.Utils;
-import itdelatrisu.opsu.downloads.DownloadNode;
+import org.json.JSONException;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -30,10 +27,14 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.json.JSONException;
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.downloads.DownloadNode;
 /*
 import org.newdawn.slick.util.Log;
 */
@@ -65,7 +66,7 @@ public class MnetworkServer extends DownloadServer {
 
 	@Override
 	public String getDownloadURL(int beatmapSetID) {
-		return String.format(DOWNLOAD_URL, beatmapSetID);
+		return String.format(Locale.US,DOWNLOAD_URL, beatmapSetID);
 	}
 
 	@Override
@@ -74,7 +75,7 @@ public class MnetworkServer extends DownloadServer {
 		try {
 			// read HTML
 			String queryString = (query.isEmpty()) ? "-" : query;
-			String search = String.format(SEARCH_URL, URLEncoder.encode(queryString, "UTF-8").replace("+", "%20"));
+			String search = String.format(Locale.US,SEARCH_URL, URLEncoder.encode(queryString, "UTF-8").replace("+", "%20"));
 			String html = Utils.readDataFromUrl(new URL(search));
 			if (html == null) {
 				this.totalResults = -1;

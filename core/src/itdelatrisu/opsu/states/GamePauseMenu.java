@@ -18,9 +18,18 @@
 
 package itdelatrisu.opsu.states;
 
-import fluddokt.opsu.fake.*;
-import fluddokt.newdawn.slick.state.transition.*;
-
+import fluddokt.ex.DeviceInfo;
+import fluddokt.ex.VideoLoader;
+import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
+import fluddokt.newdawn.slick.state.transition.FadeInTransition;
+import fluddokt.opsu.fake.BasicGameState;
+import fluddokt.opsu.fake.Color;
+import fluddokt.opsu.fake.GameContainer;
+import fluddokt.opsu.fake.Graphics;
+import fluddokt.opsu.fake.Input;
+import fluddokt.opsu.fake.Keyboard;
+import fluddokt.opsu.fake.SlickException;
+import fluddokt.opsu.fake.StateBasedGame;
 import itdelatrisu.opsu.GameImage;
 import itdelatrisu.opsu.Opsu;
 import itdelatrisu.opsu.audio.MusicController;
@@ -59,7 +68,14 @@ public class GamePauseMenu extends BasicGameState {
 	private Input input;
 	private final int state;
 	private Game gameState;
-
+	private boolean useVideo;
+	private float musicBarX, musicBarY, musicBarWidth, musicBarHeight;
+	private static final Color
+			MUSICBAR_NORMAL = new Color(12, 9, 10, 0.25f),
+			MUSICBAR_HOVER  = new Color(12, 9, 10, 0.35f),
+			MUSICBAR_FILL   = new Color(255, 177, 122, 0.75f);
+	private boolean adjusting=false;
+	private boolean turnedOffNotif=false;
 	public GamePauseMenu(int state) {
 		this.state = state;
 	}
@@ -71,6 +87,12 @@ public class GamePauseMenu extends BasicGameState {
 		this.game = game;
 		this.input = container.getInput();
 		this.gameState = (Game) game.getState(Opsu.STATE_GAME);
+		int width = container.getWidth();
+		int height = container.getHeight();
+		musicBarX = width * 0.01f;
+		musicBarY = height * 0.05f;
+		musicBarWidth = Math.max(width * 0.005f, 7);
+		musicBarHeight = height * 0.9f;
 	}
 
 	@Override
@@ -96,7 +118,22 @@ public class GamePauseMenu extends BasicGameState {
 		retryButton.draw();
 		backButton.draw();
 
+
+		if(useVideo) {
+			int mouseX = input.getMouseX(), mouseY = input.getMouseY();
+			g.setColor((musicPositionBarContains(mouseX, mouseY)) ? MUSICBAR_HOVER : MUSICBAR_NORMAL);
+			g.fillRoundRect(musicBarX, musicBarY, musicBarWidth, musicBarHeight, 4);
+			g.setColor(MUSICBAR_FILL);
+			float musicBarPosition = (float) Options.GameOption.VIDEO_BRIGHTNESS.getIntegerValue() / 255f;
+			g.fillRoundRect(musicBarX, musicBarY + musicBarHeight * (1 - musicBarPosition), musicBarWidth, musicBarHeight * musicBarPosition, 4);
+		}
+
 		UI.draw(g);
+	}
+
+	private boolean musicPositionBarContains(float cx, float cy) {
+		return ((cx > musicBarX && cx < musicBarX + musicBarWidth*10) &&
+				(cy > musicBarY && cy < musicBarY + musicBarHeight));
 	}
 
 	@Override
@@ -107,6 +144,8 @@ public class GamePauseMenu extends BasicGameState {
 		continueButton.hoverUpdate(delta, mouseX, mouseY);
 		retryButton.hoverUpdate(delta, mouseX, mouseY);
 		backButton.hoverUpdate(delta, mouseX, mouseY);
+		useVideo=MusicController.getBeatmap().video!=null&&Options.isBeatmapVideoEnabled()&&MusicController.getBeatmap().video.isFile();
+
 	}
 
 	@Override
@@ -161,14 +200,16 @@ public class GamePauseMenu extends BasicGameState {
 	public void mousePressed(int button, int x, int y) {
 		if (button == Input.MOUSE_MIDDLE_BUTTON)
 			return;
-
 		boolean loseState = (gameState.getPlayState() == Game.PlayState.LOSE);
+		adjusting=false;
 		if (continueButton.contains(x, y) && !loseState) {
 			SoundController.playSound(SoundEffect.MENUBACK);
 			gameState.setPlayState(Game.PlayState.NORMAL);
+
 			game.enterState(Opsu.STATE_GAME);
 		} else if (retryButton.contains(x, y)) {
 			SoundController.playSound(SoundEffect.MENUHIT);
+			VideoLoader.loader.seek(0);
 			gameState.setPlayState(Game.PlayState.RETRY);
 			game.enterState(Opsu.STATE_GAME);
 		} else if (backButton.contains(x, y)) {
@@ -181,10 +222,31 @@ public class GamePauseMenu extends BasicGameState {
 			if (UI.getCursor().isBeatmapSkinned())
 				UI.getCursor().reset();
 			MusicController.setPitch(1.0f);
+
+			if(useVideo)
+				VideoLoader.loader.makeInvisible();
+			if(useVideo)
+				VideoLoader.loader.setupVideo(MusicController.getBeatmap().video.getAbsolutePath());
 			game.enterState(Opsu.STATE_SONGMENU, new EasedFadeOutTransition(), new FadeInTransition());
+		} else if(useVideo&&musicPositionBarContains(x,y)){
+			float pos = (musicBarHeight - y + musicBarY) / musicBarHeight * 255f;
+			Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(pos));
+			adjusting=true;
+			if(!turnedOffNotif){
+				DeviceInfo.info.setShownNotification("brightSlider",true);
+				turnedOffNotif=true;
+			}
 		}
 	}
-
+	@Override
+	public void mouseDragged(int oldx, int oldy, int newx, int newy){
+		if(useVideo&&(musicPositionBarContains(oldx,oldy)||adjusting)){
+			float pos = (musicBarHeight - newy + musicBarY) / musicBarHeight * 255f;
+			Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(pos));
+		}
+		else
+			adjusting=false;
+	}
 	@Override
 	public void mouseWheelMoved(int newValue) {
 		if (Options.isMouseWheelDisabled())
@@ -201,7 +263,11 @@ public class GamePauseMenu extends BasicGameState {
 		continueButton.resetHover();
 		retryButton.resetHover();
 		backButton.resetHover();
+		if(!DeviceInfo.info.shownNotification("brightSlider")&&useVideo){
+			UI.getNotificationManager().sendNotification("Hey did you know you can change the background video brightness with the slider on the left?");
+		}
 	}
+
 
 	@Override
 	public void leave(GameContainer container, StateBasedGame game) throws SlickException {

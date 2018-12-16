@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import fluddokt.ex.DeviceInfo;
+import fluddokt.ex.VideoLoader;
 import fluddokt.opsu.fake.ClasspathLocation;
 import fluddokt.opsu.fake.Display;
 import fluddokt.opsu.fake.File;
@@ -365,7 +367,7 @@ public class Options {
 			@Override
 			public void read(String s) {
 				try {
-					Resolution res = Resolution.valueOf(String.format("RES_%s", s.replace('x', '_')));
+					Resolution res = Resolution.valueOf(String.format(Locale.US,"RES_%s", s.replace('x', '_')));
 					resolution = res;
 				} catch (IllegalArgumentException e) {}
 			}
@@ -427,7 +429,7 @@ public class Options {
 
 			@Override
 			public String getValueString() {
-				return String.format((getTargetFPS() == 60) ? "%dfps (vsync)" : "%dfps", getTargetFPS());
+				return String.format(Locale.US,(getTargetFPS() == 60) ? "%dfps (vsync)" : "%dfps", getTargetFPS());
 			}
 
 			@Override
@@ -435,7 +437,7 @@ public class Options {
 				if (itemList == null) {
 					itemList = new String[targetFPS.length];
 					for (int i = 0; i < targetFPS.length; i++)
-						itemList[i] = String.format((targetFPS[i] == 60) ? "%dfps (vsync)" : "%dfps", targetFPS[i]);
+						itemList[i] = String.format(Locale.US,(targetFPS[i] == 60) ? "%dfps (vsync)" : "%dfps", targetFPS[i]);
 				}
 				return itemList;
 			}
@@ -514,7 +516,7 @@ public class Options {
 		},
 		CURSOR_SIZE ("Cursor size", "CursorSize", "Change the cursor scale.", 100, 50, 200) {
 			@Override
-			public String getValueString() { return String.format("%.2fx", val / 100f); }
+			public String getValueString() { return String.format(Locale.US,"%.2fx", val / 100f); }
 
 			@Override
 			public String write() { return String.format(Locale.US, "%.2f", val / 100f); }
@@ -543,10 +545,21 @@ public class Options {
 			}
 		},
 		EFFECT_VOLUME ("Effects", "VolumeEffect", "Menu and game sound effects volume.", 70, 0, 100),
+		VIDEO_BRIGHTNESS("Background Video Brightness","VideoBrightness","Brightness of background video", 200, 0, 255){
+			@Override
+			public String getValueString() {
+				return ""+val;
+			}
+			@Override
+			public void setValue(int value) {
+				super.setValue(value);
+				VideoLoader.loader.adjustBrightness(value);
+			}
+		},
 		HITSOUND_VOLUME ("Hit sounds", "VolumeHitSound", "Hit sounds volume.", 30, 0, 100),
 		MUSIC_OFFSET ("Universal offset", "Offset", "Adjust this value if hit objects are out of sync.", -200, -500, 500) {
 			@Override
-			public String getValueString() { return String.format("%dms", val); }
+			public String getValueString() { return String.format(Locale.US,"%dms", val); }
 		},
 		DISABLE_SOUNDS ("Disable all sound effects", "DisableSound", "May resolve Linux sound driver issues.\nRequires a restart.", false) {
 			@Override
@@ -578,6 +591,7 @@ public class Options {
 		BACKGROUND_DIM ("Background dim", "DimLevel", "Percentage to dim the background image during gameplay.", 50, 0, 100),
 		FORCE_DEFAULT_PLAYFIELD ("Force default playfield", "ForceDefaultPlayfield", "Overrides the song background with the default playfield background.", false),
 		ENABLE_VIDEOS ("Background video", "Video", "Enables background video playback.\nIf you get a large amount of lag on beatmaps with video, try disabling this feature.", true),
+
 		IGNORE_BEATMAP_SKINS ("Ignore all beatmap skins", "IgnoreBeatmapSkins", "Defaults game settings to never use skin element overrides provided by beatmaps.", false),
 		FORCE_SKIN_CURSOR ("Always use skin cursor", "UseSkinCursor", "The selected skin's cursor will override any beatmap-specific cursor modifications.", false),
 		SNAKING_SLIDERS ("Snaking sliders", "SnakingSliders", "Sliders gradually snake out from their starting point.", true),
@@ -591,10 +605,11 @@ public class Options {
 		SHOW_FOLLOW_POINTS ("Follow points", "FollowPoints", "Shows follow points between hit objects.", true),
 		SHOW_HIT_ERROR_BAR ("Hit error bar", "ScoreMeter", "Shows precisely how accurate you were with each hit.", false),
 		ALWAYS_SHOW_KEY_OVERLAY ("Always show key overlay", "KeyOverlay", "Show the key overlay when playing instead of only on replays.", false),
+		SYNC_USER_INFO("Sync user information across devices","Sync Info","Sync all user statistics across devices including score and accuracy", true),
 		LOAD_HD_IMAGES ("Load HD images", "LoadHDImages", String.format("Loads HD (%s) images when available.\nIncreases memory usage and loading times.", GameImage.HD_SUFFIX), true),
 		FIXED_CS ("Fixed CS", "FixedCS", "Determines the size of circles and sliders.", 0, 0, 100) {
 			@Override
-			public String getValueString() { return (val == 0) ? "Disabled" : String.format("%.1f", val / 10f); }
+			public String getValueString() { return (val == 0) ? "Disabled" : String.format(Locale.US,"%.1f", val / 10f); }
 
 			@Override
 			public String write() { return String.format(Locale.US, "%.1f", val / 10f); }
@@ -608,7 +623,7 @@ public class Options {
 		},
 		FIXED_HP ("Fixed HP", "FixedHP", "Determines the rate at which health decreases.", 0, 0, 100) {
 			@Override
-			public String getValueString() { return (val == 0) ? "Disabled" : String.format("%.1f", val / 10f); }
+			public String getValueString() { return (val == 0) ? "Disabled" : String.format(Locale.US,"%.1f", val / 10f); }
 
 			@Override
 			public String write() { return String.format(Locale.US, "%.1f", val / 10f); }
@@ -622,7 +637,7 @@ public class Options {
 		},
 		FIXED_AR ("Fixed AR", "FixedAR", "Determines how long hit circles stay on the screen.", 0, 0, 100) {
 			@Override
-			public String getValueString() { return (val == 0) ? "Disabled" : String.format("%.1f", val / 10f); }
+			public String getValueString() { return (val == 0) ? "Disabled" : String.format(Locale.US,"%.1f", val / 10f); }
 
 			@Override
 			public String write() { return String.format(Locale.US, "%.1f", val / 10f); }
@@ -636,7 +651,7 @@ public class Options {
 		},
 		FIXED_OD ("Fixed OD", "FixedOD", "Determines the time window for hit results.", 0, 0, 100) {
 			@Override
-			public String getValueString() { return (val == 0) ? "Disabled" : String.format("%.1f", val / 10f); }
+			public String getValueString() { return (val == 0) ? "Disabled" : String.format(Locale.US,"%.1f", val / 10f); }
 
 			@Override
 			public String write() { return String.format(Locale.US, "%.1f", val / 10f); }
@@ -650,7 +665,7 @@ public class Options {
 		},
 		FIXED_SPEED ("Fixed speed", "FixedSpeed", "Determines the speed of the music.", 0, 0, 300) {
 			@Override
-			public String getValueString() { return (val == 0) ? "Disabled" : String.format("%.2fx", val / 100f); }
+			public String getValueString() { return (val == 0) ? "Disabled" : String.format(Locale.US,"%.2fx", val / 100f); }
 
 			@Override
 			public String write() { return String.format(Locale.US, "%.2f", val / 100f); }
@@ -665,14 +680,14 @@ public class Options {
 		CHECKPOINT ("Track checkpoint", "Checkpoint", "Press Ctrl+L while playing to load a checkpoint, and Ctrl+S to set one.", 0, 0, 1800) {
 			@Override
 			public String getValueString() {
-				return (val == 0) ? "Disabled" : String.format("%02d:%02d",
+				return (val == 0) ? "Disabled" : String.format(Locale.US,"%02d:%02d",
 						TimeUnit.SECONDS.toMinutes(val),
 						val - TimeUnit.MINUTES.toSeconds(TimeUnit.SECONDS.toMinutes(val)));
 			}
 		},
 		PARALLAX ("Parallax", "MenuParallax", "Add a parallax effect based on the current cursor position.", true),
 		ENABLE_THEME_SONG ("Theme song", "MenuMusic", OpsuConstants.PROJECT_NAME + " will play themed music throughout the game, instead of using random beatmaps.", true),
-		REPLAY_SEEKING ("Replay seeking", "ReplaySeeking", "Enable a seeking bar on the left side of the screen during replays.", false),
+		REPLAY_SEEKING ("Replay seeking", "ReplaySeeking", "Enable a seeking bar on the left side of the screen during replays.", true),
 		DISABLE_UPDATER ("Disable automatic updates", "DisableUpdater", "Disable checking for updates when the game starts.", false),
 		ENABLE_WATCH_SERVICE ("Watch service", "WatchService", "Watch the beatmap directory for changes. Requires a restart.", false) {
 			@Override
@@ -681,14 +696,14 @@ public class Options {
 		/*
 		};
 		*/
-		IN_GAME_PAUSE("Enable in-game pause button", "InGamePause", "Displays a pause button during gameplay.", false),
+		IN_GAME_PAUSE("Enable in-game pause button", "InGamePause", "Displays a pause button during gameplay.", !DeviceInfo.info.hasPhysicalButtons()),
 		MOBILE_UI_SCALING ("UI Scale", "MobileUIScale", "Scales certain UI elements. Requires a restart.", 
 				(com.badlogic.gdx.Gdx.graphics.getWidth()/com.badlogic.gdx.Gdx.graphics.getPpiX()) <= 6.0f?//screen width less than 6 inches
 						20:
 						10
 				, 5, 25) {
 			@Override
-			public String getValueString() { return (val == 0) ? "Disabled" : String.format("%.1f", val / 10f); }
+			public String getValueString() { return (val == 0) ? "Disabled" : String.format(Locale.US,"%.1f", val / 10f); }
 			
 			@Override
 			public void read(String s) {
@@ -704,11 +719,11 @@ public class Options {
 		
 		SLIDER_QUALITY ("Old Slider Quality", "SliderQuality", "Lower values for better-looking sliders (in the old slider style).", 1, 1, 7){
 			@Override
-			public String getValueString() { return String.format("%d", val); }
+			public String getValueString() { return String.format(Locale.US,"%d", val); }
 		},
 		HITCIRCLE_SCALE ("Hit Circle Scale (Restart Required)\n", "HitCircleScale", "Restart Required, Experimental Sliders Recommended", 100, 0, 150){
 			@Override
-			public String getValueString() { return String.format("%.2f", val/100f); }
+			public String getValueString() { return String.format(Locale.US,"%.2f", val/100f); }
 
 		},
 		SCOREBOARD("Enable in-game scoreboard", "Scoreboard", "Displays the in-game scoreboard.", false),
@@ -887,7 +902,7 @@ public class Options {
 		 */
 		public String getValueString() {
 			if (type == OptionType.NUMERIC)
-				return String.format("%d%%", val);
+				return String.format(Locale.US,"%d%%", val);
 			else if (type == OptionType.BOOLEAN)
 				return (bool) ? "Yes" : "No";
 			else
@@ -1709,7 +1724,7 @@ public class Options {
 		// header
 			SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM dd, yyyy");
 			String date = dateFormat.format(new Date());
-			writer.write(String.format("# %s configuration", OpsuConstants.PROJECT_NAME));
+			writer.write(String.format(Locale.US,"# %s configuration", OpsuConstants.PROJECT_NAME));
 			writer.newLine();
 			writer.write("# last updated on ");
 			writer.write(date);

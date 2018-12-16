@@ -18,7 +18,12 @@
 
 package itdelatrisu.opsu.audio;
 
-import fluddokt.opsu.fake.*;
+import fluddokt.opsu.fake.Color;
+import fluddokt.opsu.fake.File;
+import fluddokt.opsu.fake.Music;
+import fluddokt.opsu.fake.MusicListener;
+import fluddokt.opsu.fake.ResourceLoader;
+import fluddokt.opsu.fake.SoundStore;
 import itdelatrisu.opsu.ErrorHandler;
 import itdelatrisu.opsu.Utils;
 import itdelatrisu.opsu.beatmap.Beatmap;
@@ -116,7 +121,8 @@ public class MusicController {
 			//	trackLoader = new Thread() {
 			//		@Override
 			//		public void run() {
-						loadTrack(audioFile, (preview) ? beatmap.previewTime : 0, loop);
+
+				loadTrack(audioFile, (preview) ? beatmap.previewTime : 0, loop);
 			//		}
 			//	};
 			//	trackLoader.start();
@@ -131,6 +137,7 @@ public class MusicController {
 			playAt(beatmap.previewTime, loop);
 
 		lastBeatmap = beatmap;
+
 	}
 
 	/**

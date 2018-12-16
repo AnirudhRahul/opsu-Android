@@ -27,6 +27,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Locale;
 
 import fluddokt.opsu.fake.Log;
 import itdelatrisu.opsu.ErrorHandler;
@@ -70,7 +71,7 @@ public class HexideServer extends DownloadServer {
 
 	@Override
 	public String getDownloadURL(int beatmapSetID) {
-		return String.format(DOWNLOAD_URL, beatmapSetID, beatmapSetID);
+		return String.format(Locale.US,DOWNLOAD_URL, beatmapSetID, beatmapSetID);
 	}
 
 	@Override
@@ -83,9 +84,9 @@ public class HexideServer extends DownloadServer {
 			int resultIndex = (page - 1) * PAGE_LIMIT;
 			String search;
 			if (query.isEmpty())
-				search = String.format(HOME_URL, resultIndex);
+				search = String.format(Locale.US,HOME_URL, resultIndex);
 			else
-				search = String.format(SEARCH_URL, URLEncoder.encode(query, "UTF-8"), resultIndex);
+				search = String.format(Locale.US,SEARCH_URL, URLEncoder.encode(query, "UTF-8"), resultIndex);
 			URL searchURL = new URL(search);
 			JSONArray arr = null;
 			try {

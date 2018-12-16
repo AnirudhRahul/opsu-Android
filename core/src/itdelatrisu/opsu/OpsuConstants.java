@@ -21,6 +21,7 @@ package itdelatrisu.opsu;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.Locale;
 
 /**
  * Project-specific constants.
@@ -41,6 +42,9 @@ public class OpsuConstants {
 	/** Credits address. */
 	public static final URI CREDITS_URI = URI.create("https://github.com/AnirudhRahul/opsu/blob/master/CREDITS.md");
 
+	/** Privacy Policy address. */
+	public static final URI PRIVACY_URI = URI.create("https://github.com/AnirudhRahul/opsu-Android/blob/master/privacyPolicy.txt");
+
 	/** Issue reporting address. */
 	public static final String ISSUES_URL = "https://play.google.com/store/apps/details?id=fluddokt.opsu.android&hl=en";
 
@@ -53,7 +57,7 @@ public class OpsuConstants {
 	/** Returns the changelog URI for the given version. */
 	public static URI getChangelogURI(String version) {
 		try {
-			return URI.create(String.format(CHANGELOG_URL, URLEncoder.encode(version, "UTF-8")));
+			return URI.create(String.format(Locale.US,CHANGELOG_URL, URLEncoder.encode(version, "UTF-8")));
 		} catch (UnsupportedEncodingException e) {
 			return WEBSITE_URI;
 		}

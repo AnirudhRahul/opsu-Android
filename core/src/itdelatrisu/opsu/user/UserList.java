@@ -99,6 +99,8 @@ public class UserList {
 	/** Returns the user associated with the name, or null if none. */
 	public User getUser(String name) { return users.get(name); }
 
+	/** Adds a user to the list*/
+	public void addUser(User in){ScoreDB.updateUser(in);users.put(in.getName(),in);}
 	/**
 	 * Changes the current user.
 	 * @param name the user's name
@@ -126,7 +128,7 @@ public class UserList {
 		return user;
 	}
 	public User createNewUser(String name, String password) {
-		User user = new User(name, Integer.MAX_VALUE);
+		User user = new User(name, 0);
 		user.setPassword(password);
 		ScoreDB.updateUser(user);
 
@@ -139,6 +141,7 @@ public class UserList {
 				if(!e.getName().equals("Guest")&&e.getIconId()!=Integer.MAX_VALUE)
 					removeList.add(e.getName());
 		}
+		UI.getNotificationManager().sendNotification(removeList.toString());
 		for(String e:removeList)
 			ScoreDB.deleteUser(e);
 		users.clear();

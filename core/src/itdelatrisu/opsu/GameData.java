@@ -23,6 +23,7 @@ import com.badlogic.gdx.utils.Array;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -389,7 +390,7 @@ public class GameData {
 		hitResultCount[HIT_100K] = s.katu;
 		hitResultCount[HIT_MISS] = s.miss;
 		this.replay = (s.replayString == null) ? null :
-			new Replay(new File(Options.getReplayDir(), String.format("%s.osr", s.replayString)));
+			new Replay(new File(Options.getReplayDir(), String.format(Locale.US,"%s.osr", s.replayString)));
 
 		loadImages();
 	}
@@ -612,14 +613,14 @@ public class GameData {
 
 		// score
 		if (!relaxAutoPilot)
-			drawFixedSizeSymbolString((scoreDisplay < 100000000) ? String.format("%08d", scoreDisplay) : Long.toString(scoreDisplay),
+			drawFixedSizeSymbolString((scoreDisplay < 100000000) ? String.format(Locale.US,"%08d", scoreDisplay) : Long.toString(scoreDisplay),
 					width - margin, 0, 1f, alpha, getScoreSymbolImage('0').getWidth() - 2, true);
 
 		// score percentage
 		int symbolHeight = getScoreSymbolImage('0').getHeight();
 		if (!relaxAutoPilot)
 			drawSymbolString(
-					String.format((scorePercentDisplay < 10f) ? "0%.2f%%" : "%.2f%%", scorePercentDisplay),
+					String.format(Locale.US,(scorePercentDisplay < 10f) ? "0%.2f%%" : "%.2f%%", scorePercentDisplay),
 					width - margin, symbolHeight, 0.60f, alpha, true);
 
 		// map progress circle
@@ -775,7 +776,7 @@ public class GameData {
 				float comboPop = 1 - ((float) comboPopTime / COMBO_POP_TIME);
 				float comboPopBack  = 1 + comboPop * 0.45f;
 				float comboPopFront = 1 + comboPop * 0.08f;
-				String comboString = String.format("%dx", combo);
+				String comboString = String.format(Locale.US,"%dx", combo);
 				if (comboPopTime != COMBO_POP_TIME)
 					drawSymbolString(comboString, margin, height - margin - (symbolHeight * comboPopBack), comboPopBack, 0.5f * alpha, false);
 				drawSymbolString(comboString, margin, height - margin - (symbolHeight * comboPopFront), comboPopFront, alpha, false);
@@ -820,7 +821,7 @@ public class GameData {
 		long correctDigitsFactor = (long) Math.pow(10, scoreWidth - correctDigitsWidth);
 		long displayScore = score / correctDigitsFactor * correctDigitsFactor + Math.abs(random.nextLong()) % correctDigitsFactor;
 		drawFixedSizeSymbolString(
-			(displayScore < 100000000) ? String.format("%08d", displayScore) : Long.toString(displayScore),
+			(displayScore < 100000000) ? String.format(Locale.US,"%08d", displayScore) : Long.toString(displayScore),
 			180 * uiScale, 120 * uiScale,
 			scoreTextScale, 1f, zeroImg.getWidth() * scoreTextScale, false
 		);
@@ -858,7 +859,7 @@ public class GameData {
 					float tp = AnimationEquation.OUT_CUBIC.calc(t);
 					float alpha = tp;
 					offsetX += -64f * (1f - tp);
-					drawSymbolString(String.format("%dx", rankResultOrder[i]),
+					drawSymbolString(String.format(Locale.US,"%dx", rankResultOrder[i]),
 						(resultInitialX + offsetX) * uiScale, (resultInitialY + offsetY) * uiScale, symbolTextScale, alpha, false
 					);
 				}
@@ -883,7 +884,7 @@ public class GameData {
 			float alpha = tp;
 			float offsetX = -15f * (1f - tp);
 			drawSymbolString(
-				String.format("%dx", comboMax),
+				String.format(Locale.US,"%dx", comboMax),
 				(24 + offsetX) * uiScale, numbersY * uiScale, symbolTextScale, alpha, false
 			);
 		}
@@ -901,7 +902,7 @@ public class GameData {
 			float alpha = tp;
 			float offsetX = -62f * (1f - tp);
 			drawSymbolString(
-				String.format("%02.2f%%", getScorePercent()),
+				String.format(Locale.US,"%02.2f%%", getScorePercent()),
 				(accuracyX + 20 + offsetX) * uiScale, numbersY * uiScale, symbolTextScale, alpha, false
 			);
 		}
@@ -981,12 +982,12 @@ public class GameData {
 		rankingTitle.draw(width - 24 * uiScale - rankingTitle.getWidth(), 0);
 		float marginX = width * 0.01f, marginY = height * 0.002f;
 		Fonts.LARGE.drawString(marginX, marginY,
-			String.format("%s - %s [%s]", beatmap.getArtist(), beatmap.getTitle(), beatmap.version), Color.white);
+			String.format(Locale.US,"%s - %s [%s]", beatmap.getArtist(), beatmap.getTitle(), beatmap.version), Color.white);
 		Fonts.MEDIUM.drawString(marginX, marginY + Fonts.LARGE.getLineHeight() - 3,
-			String.format("Beatmap by %s", beatmap.creator), Color.white);
-		String player = (scoreData.playerName == null) ? "" : String.format(" by %s", scoreData.playerName);
+			String.format(Locale.US,"Beatmap by %s", beatmap.creator), Color.white);
+		String player = (scoreData.playerName == null) ? "" : String.format(Locale.US," by %s", scoreData.playerName);
 		Fonts.MEDIUM.drawString(marginX, marginY + Fonts.LARGE.getLineHeight() + Fonts.MEDIUM.getLineHeight() - 5,
-			String.format("Played%s on %s.", player, scoreData.getTimeString()), Color.white);
+			String.format(Locale.US,"Played%s on %s.", player, scoreData.getTimeString()), Color.white);
 
 		// mod icons
 		if (scoreData.mods != 0) {
@@ -1799,7 +1800,7 @@ public class GameData {
 		float hitErrorEarly = (earlyCount > 0) ? (float) earlySum / earlyCount : 0f;
 		float hitErrorLate = (lateCount > 0) ? (float) lateSum / lateCount : 0f;
 		float unstableRate = (errors.size!=0) ? (float) (Utils.standardDeviation(errors) * 10) : 0f;
-		return String.format(
+		return String.format(Locale.US,
 			"Accuracy:\nError: %.2fms - %.2fms avg\nUnstable Rate: %.2f",
 			hitErrorEarly, hitErrorLate, unstableRate
 		);

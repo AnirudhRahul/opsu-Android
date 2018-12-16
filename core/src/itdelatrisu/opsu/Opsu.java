@@ -18,8 +18,20 @@
 
 package itdelatrisu.opsu;
 
-import fluddokt.opsu.fake.*;
-import fluddokt.newdawn.slick.state.transition.*;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+
+import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
+import fluddokt.newdawn.slick.state.transition.FadeInTransition;
+import fluddokt.opsu.fake.DefaultLogSystem;
+import fluddokt.opsu.fake.File;
+import fluddokt.opsu.fake.FileOutputStream;
+import fluddokt.opsu.fake.FileSystemLocation;
+import fluddokt.opsu.fake.GameContainer;
+import fluddokt.opsu.fake.Log;
+import fluddokt.opsu.fake.ResourceLoader;
+import fluddokt.opsu.fake.SlickException;
+import fluddokt.opsu.fake.StateBasedGame;
 import itdelatrisu.opsu.audio.MusicController;
 import itdelatrisu.opsu.db.DBController;
 import itdelatrisu.opsu.downloads.DownloadList;
@@ -34,16 +46,9 @@ import itdelatrisu.opsu.states.MainMenu;
 import itdelatrisu.opsu.states.SongMenu;
 import itdelatrisu.opsu.states.Splash;
 import itdelatrisu.opsu.ui.UI;
-import itdelatrisu.opsu.video.FFmpeg;
-
-
 
 //import java.io.File;
-import java.io.FileNotFoundException;
 //import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.lang.reflect.Field;
 
 /*
 import org.newdawn.slick.GameContainer;

@@ -18,10 +18,9 @@
 
 package itdelatrisu.opsu.downloads.servers;
 
-import fluddokt.opsu.fake.Log;
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.Utils;
-import itdelatrisu.opsu.downloads.DownloadNode;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -29,11 +28,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.downloads.DownloadNode;
 /*
 import org.newdawn.slick.util.Log;
 */
@@ -70,7 +71,7 @@ public class MengSkyServer extends DownloadServer {
 
 	@Override
 	public String getDownloadURL(int beatmapSetID) {
-		return String.format(DOWNLOAD_URL, beatmapSetID);
+		return String.format(Locale.US,DOWNLOAD_URL, beatmapSetID);
 	}
 
 	@Override
@@ -79,7 +80,7 @@ public class MengSkyServer extends DownloadServer {
 		try {
 			// read JSON
 			int rankedOnlyFlag = rankedOnly ? 0 : 1;
-			String search = String.format(
+			String search = String.format(Locale.US,
 				SEARCH_URL, URLEncoder.encode(query, "UTF-8"), page,
 				rankedOnlyFlag, rankedOnlyFlag, rankedOnlyFlag
 			);

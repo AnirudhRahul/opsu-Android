@@ -18,15 +18,16 @@
 
 package itdelatrisu.opsu.states;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Stack;
 
+import fluddokt.ex.VideoLoader;
 import fluddokt.newdawn.slick.state.transition.DelayedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.EmptyTransition;
@@ -41,7 +42,6 @@ import fluddokt.opsu.fake.Graphics;
 import fluddokt.opsu.fake.Image;
 import fluddokt.opsu.fake.Input;
 import fluddokt.opsu.fake.Keyboard;
-import fluddokt.opsu.fake.Log;
 import fluddokt.opsu.fake.SlickException;
 import fluddokt.opsu.fake.StateBasedGame;
 import itdelatrisu.opsu.ErrorHandler;
@@ -86,7 +86,6 @@ import itdelatrisu.opsu.ui.animations.AnimatedValue;
 import itdelatrisu.opsu.ui.animations.AnimationEquation;
 import itdelatrisu.opsu.user.User;
 import itdelatrisu.opsu.user.UserList;
-import itdelatrisu.opsu.video.Video;
 
 //import java.io.File;
 /*
@@ -144,7 +143,7 @@ public class Game extends BasicGameState {
 	private static final float SCOREBOARD_FADE_IN_TIME = 300f;
 
 	/** Minimum time before start of song, in milliseconds, to process skip-related actions. */
-	private static final int SKIP_OFFSET = 2000;
+	private static int SKIP_OFFSET = 2000;
 
 	/** Tolerance in case if hit object is not snapped to the grid. */
 	private static final float STACK_LENIENCE = 3f;
@@ -337,8 +336,7 @@ public class Game extends BasicGameState {
 	/** The last track position. */
 	private int lastTrackPosition = 0;
 
-	/** The beatmap video (if any). */
-	private Video video;
+	private boolean useVideo=false;
 
 	/** The video start time (if any), otherwise -1. */
 	private int videoStartTime;
@@ -351,6 +349,9 @@ public class Game extends BasicGameState {
 
 	/** The objects holding data for the input overlay. */
 	private InputOverlayKey[] inputOverlayKeys;
+
+	//Whether or not to disable video because of error
+	private boolean disableVideo=false;
 
 	/** Music position bar background colors. */
 	private static final Color
@@ -374,6 +375,7 @@ public class Game extends BasicGameState {
 		};
 	}
 
+	public void setDisableVideo(boolean in){disableVideo=in;}
 	@Override
 	public void init(GameContainer container, StateBasedGame game)
 			throws SlickException {
@@ -391,6 +393,7 @@ public class Game extends BasicGameState {
 		gOffscreen.setBackground(Color.black);
 		*/
 
+
 		// initialize music position bar location
 		musicBarX = width * 0.01f;
 		musicBarY = height * 0.05f;
@@ -405,6 +408,7 @@ public class Game extends BasicGameState {
 
 		// create the associated GameData object
 		data = new GameData(width, height);
+
 	}
 
 	@Override
@@ -421,7 +425,6 @@ public class Game extends BasicGameState {
 		int timeDiff = firstObjectTime - trackPosition;
 
 		g.setBackground(Color.black);
-
 		/*
 		// "flashlight" mod: initialize offscreen graphics
 		if (GameMod.FLASHLIGHT.isActive()) {
@@ -580,7 +583,7 @@ public class Game extends BasicGameState {
 			else
 				dimLevel = 1f;
 		}
-		if (Options.isDefaultPlayfieldForced() || !beatmap.drawBackground(width, height, 0, 0, dimLevel, false)) {
+		if (Options.isDefaultPlayfieldForced() || !beatmap.drawBackground(width, height, 0, 0, dimLevel, false,g,useVideo)) {
 			Image bg = GameImage.MENU_BG.getImage();
 			bg.setAlpha(dimLevel);
 			bg.drawCentered(width / 2, height / 2);
@@ -663,8 +666,7 @@ public class Game extends BasicGameState {
 			data.drawGameElements(g, false, objectIndex == 0, gameElementAlpha);
 
 			// skip beginning
-			if (objectIndex == 0 &&
-			    trackPosition < beatmap.objects[0].getTime() - SKIP_OFFSET)
+			if (objectIndex == 0 && trackPosition < beatmap.objects[0].getTime() - SKIP_OFFSET)
 				skipButton.draw();
 
 			// show retries
@@ -678,7 +680,7 @@ public class Game extends BasicGameState {
 					Colors.WHITE_FADE.a = (1000 + timeDiff) / 500f;
 				Fonts.MEDIUM.drawString(
 						2 + (width / 100), retryHeight,
-						String.format("%d retries and counting...", retries),
+						String.format(Locale.US,"%d retries and counting...", retries),
 						Colors.WHITE_FADE
 				);
 				Colors.WHITE_FADE.a = oldAlpha;
@@ -865,7 +867,11 @@ public class Game extends BasicGameState {
 		
 		if (resumeMusicAfterAFrame) {
 			MusicController.resume();
+
 			resumeMusicAfterAFrame = false;
+		}
+		if(useVideo&&lastTrackPosition>=videoStartTime&& !VideoLoader.loader.isPlaying()&&pauseTime<0) {
+			VideoLoader.loader.start();
 		}
 	}
 
@@ -886,10 +892,11 @@ public class Game extends BasicGameState {
 			// paused during lead-in or break, or "relax" or "autopilot": continue immediately
 			if (pausedMousePosition == null || (GameMod.RELAX.isActive() || GameMod.AUTOPILOT.isActive())) {
 				pauseTime = -1;
-				if (!isLeadIn())
+				if (!isLeadIn()) {
 					MusicController.resume();
-				if (video != null)
-					video.resume();
+
+//					UI.getNotificationManager().sendNotification("Start 2");
+				}
 			}
 
 			// focus lost: go back to pause screen
@@ -941,16 +948,16 @@ public class Game extends BasicGameState {
 				return;
 			}
 			MusicController.resume();
-			if (video != null)
-				video.resume();
+//			if (video != null)
+//				video.resume();
 			deathTime = -1;
 		}
 
 		// update video
-		if (video != null && !video.isFinished()) {
-			if (trackPosition >= videoStartTime)
-				video.update(trackPosition - videoStartTime - videoSeekTime);
-		}
+//		if (video != null && !video.isFinished()) {
+//			if (trackPosition >= videoStartTime)
+//				video.update(trackPosition - videoStartTime - videoSeekTime);
+//		}
 
 		// normal game update
 		if (!isReplay && !gameFinished) {
@@ -964,7 +971,7 @@ public class Game extends BasicGameState {
 			if (replayIndex >= replay.frames.length)
 				updateGame(replayX, replayY, delta, MusicController.getPosition(true), lastKeysPressed);
 
-			boolean hasVideo = (video != null);
+//			boolean hasVideo = (video != null);
 
 			// seeking to a position earlier than original track position
 			if (isSeeking && replayIndex - 1 >= 1 && replayIndex < replay.frames.length &&
@@ -1007,8 +1014,7 @@ public class Game extends BasicGameState {
 			if (isSeeking) {
 				isSeeking = false;
 				SoundController.mute(false);
-				if (hasVideo)
-					loadVideo(trackPosition);
+
 			}
 		}
 
@@ -1043,6 +1049,11 @@ public class Game extends BasicGameState {
 
 		// game finished: change state after timer expires
 		if (gameFinished && !gameFinishedTimer.update(delta)) {
+			if(useVideo) {
+				VideoLoader.loader.reset();
+//				UI.getNotificationManager().sendNotification("reset 2");
+				VideoLoader.loader.makeInvisible();
+			}
 			if (checkpointLoaded)  // if checkpoint used, skip ranking screen
 				game.closeRequested();
 			else {  // go to ranking screen
@@ -1154,8 +1165,13 @@ public class Game extends BasicGameState {
 			}
 			if (MusicController.isPlaying() || isLeadIn())
 				pauseTime = trackPosition;
-			if (video != null)
-				video.pause();
+//			if (video != null)
+//				video.pause();
+			if(useVideo){
+				VideoLoader.loader.pause();
+//				VideoLoader.loader.seek(pauseTime);
+//				UI.getNotificationManager().sendNotification("video pause 1");
+			}
 			game.enterState(Opsu.STATE_GAMEPAUSEMENU, new EmptyTransition(), new FadeInTransition());
 		}
 
@@ -1171,8 +1187,11 @@ public class Game extends BasicGameState {
 				if (deaths < 3) {
 					deathTime = trackPosition;
 					MusicController.pause();
-					if (video != null)
-						video.pause();
+//					if (video != null)
+//						video.pause();
+					if(useVideo)
+						VideoLoader.loader.pause();
+//					UI.getNotificationManager().sendNotification("video pause 2");
 					return;
 				}
 			}
@@ -1185,6 +1204,10 @@ public class Game extends BasicGameState {
 					failTrackTime = MusicController.getPosition(true);
 					MusicController.fadeOut(MUSIC_FADEOUT_TIME);
 					MusicController.pitchFadeOut(MUSIC_FADEOUT_TIME);
+					if(useVideo) {
+						VideoLoader.loader.reset();
+//						UI.getNotificationManager().sendNotification("reset 3");
+					}
 					rotations = new IdentityHashMap<GameObject, Float>();
 					SoundController.playSound(SoundEffect.FAIL);
 
@@ -1338,9 +1361,13 @@ public class Game extends BasicGameState {
 
 					// skip to checkpoint
 					MusicController.setPosition(checkpoint);
+					if(useVideo) {
+						VideoLoader.loader.seek(checkpoint);
+						UI.getNotificationManager().sendNotification("Seeked to checkpoint");
+					}
 					MusicController.setPitch(getCurrentPitch());
-					if (video != null)
-						loadVideo(checkpoint);
+//					if (video != null)
+//						loadVideo(checkpoint);
 					while (objectIndex < gameObjects.length &&
 							beatmap.objects[objectIndex++].getTime() <= checkpoint)
 						;
@@ -1393,8 +1420,11 @@ public class Game extends BasicGameState {
 		}
 		if (MusicController.isPlaying() || isLeadIn())
 			pauseTime = trackPosition;
-		if (video != null)
-			video.pause();
+		if (useVideo) {
+			VideoLoader.loader.pause();
+//			VideoLoader.loader.seek(pauseTime);
+//			UI.getNotificationManager().sendNotification("video pause 3");
+		}
 		game.enterState(Opsu.STATE_GAMEPAUSEMENU, new EmptyTransition(), new FadeInTransition());
 	}
 
@@ -1422,6 +1452,8 @@ public class Game extends BasicGameState {
 			else if (Options.isReplaySeekingEnabled() && !GameMod.AUTO.isActive() && musicPositionBarContains(x, y)) {
 				SoundController.mute(true);  // mute sounds while seeking
 				float pos = (y - musicBarY) / musicBarHeight * beatmap.endTime;
+				if(useVideo)
+					VideoLoader.loader.seek((int) (pos));
 				MusicController.setPosition((int) pos);
 				lastTrackPosition = (int) pos;
 				isSeeking = true;
@@ -1469,16 +1501,21 @@ public class Game extends BasicGameState {
 	private void gameKeyPressed(int keys, int x, int y, int trackPosition) {
 		// returning from pause screen
 		if (pauseTime > -1) {
+//			UI.getNotificationManager().sendNotification("seek pause diff::"+(lastTrackPosition-pauseTime));
 			double distance = Math.hypot(pausedMousePosition.x - x, pausedMousePosition.y - y);
 			int circleRadius = GameImage.HITCIRCLE.getImage().getWidth() / 2;
 			if (distance < circleRadius) {
 				// unpause the game
 				pauseTime = -1;
 				pausedMousePosition = null;
-				if (!isLeadIn())
+				if (!isLeadIn()) {
 					MusicController.resume();
-				if (video != null)
-					video.resume();
+					if (useVideo) {
+						VideoLoader.loader.start();
+//						UI.getNotificationManager().sendNotification("Start 3");
+					}
+
+				}
 			}
 			return;
 		}
@@ -1571,6 +1608,9 @@ public class Game extends BasicGameState {
 	public void enter(GameContainer container, StateBasedGame game)
 			throws SlickException {
 		UI.enter();
+//		UI.getNotificationManager().sendNotification("Enter called"+lastTrackPosition);
+//		UI.getNotificationManager().sendNotification("Enter called"+MusicController.getPosition(false));
+//		VideoLoader.loader.seek(MusicController.getPosition(false));
 
 		if (beatmap == null || beatmap.objects == null)
 			throw new RuntimeException("Running game with no beatmap loaded.");
@@ -1588,6 +1628,9 @@ public class Game extends BasicGameState {
 			for (int i = 0; i < 4; i++)
 				inputOverlayKeys[i].reset();
 
+			//Set video to start
+//			VideoLoader.loader.startFrom0();
+//			UI.getNotificationManager().sendNotification("started from 0");
 			// update play stats
 			if (playState == PlayState.FIRST_LOAD) {
 				beatmap.incrementPlayCounter();
@@ -1754,7 +1797,7 @@ public class Game extends BasicGameState {
 
 			// load video
 			if (beatmap.video != null) {
-				loadVideo((beatmap.videoOffset < 0) ? -beatmap.videoOffset : 0);
+//				loadVideo((beatmap.videoOffset < 0) ? -beatmap.videoOffset : 0);
 				videoStartTime = Math.max(0, beatmap.videoOffset);
 			}
 
@@ -1771,10 +1814,40 @@ public class Game extends BasicGameState {
 			SoundController.mute(false);
 		}
 
+		useVideo=!isReplay&&!disableVideo&&beatmap.video!=null&&Options.isBeatmapVideoEnabled()&&beatmap.video.isFile();
+		if(useVideo) {
+			VideoLoader.loader.makeVisible();
+			SKIP_OFFSET=1000000;
+		}
+//		if(useVideo&&lastTrackPosition==0)
+//			try {
+//				boolean sameFile=VideoLoader.loader.getPreparedFile().equals(beatmap.video.getAbsolutePath());
+//				boolean preparedFile= VideoLoader.loader.isPrepared();
+//				if(sameFile&&preparedFile) {
+//					VideoLoader.loader.startFrom0();
+//					UI.getNotificationManager().sendNotification("Enter 1");
+//				}
+//				else{
+//					UI.getNotificationManager().sendNotification("Enter 2");
+//					VideoLoader.loader.reset();
+////					UI.getNotificationManager().sendNotification("reset 1");
+//					VideoLoader.loader.setDataSource(beatmap.video.getAbsolutePath());
+////					UI.getNotificationManager().sendNotification("data source set");
+//					VideoLoader.loader.prepare();
+//				}
+//
+////				VideoLoader.loader.start();
+//
+//			} catch (IOException e) {
+//				Options.GameOption.ENABLE_VIDEOS.setValue(false);
+//				ErrorHandler.error("VideoPlaying error video playback disabled, please restart",e,true);
+//			}
+
 		skipButton.resetHover();
 		if (isReplay || GameMod.AUTO.isActive())
 			playbackSpeed.getButton().resetHover();
 		MusicController.setPitch(getCurrentPitch());
+
 	}
 	private boolean resumeMusicAfterAFrame = false;
 
@@ -1786,10 +1859,15 @@ public class Game extends BasicGameState {
 		// re-hide cursor
 		if (GameMod.AUTO.isActive() || isReplay)
 			UI.getCursor().hide();
+//		UI.getNotificationManager().sendNotification("Called leave");
+//		VideoLoader.loader.reset();
+
 
 		// replays
-		if (isReplay)
+		if (isReplay) {
 			GameMod.loadModState(previousMods);
+			VideoLoader.loader.makeInvisible();
+		}
 	}
 
 	/**
@@ -1996,12 +2074,6 @@ public class Game extends BasicGameState {
 		gameFinished = false;
 		gameFinishedTimer.setTime(0);
 		lastTrackPosition = 0;
-		if (video != null) {
-			try {
-				video.close();
-			} catch (IOException e) {}
-			video = null;
-		}
 		videoSeekTime = 0;
 		mergedSlider = null;
 	}
@@ -2051,11 +2123,11 @@ public class Game extends BasicGameState {
 
 		// skip button
 		if (GameImage.SKIP.getImages() != null) {
-			Animation skip = GameImage.SKIP.getAnimation();
-			skipButton = new MenuButton(skip, width - skip.getWidth() / 2f, height - (skip.getHeight() / 2f));
+		Animation skip = GameImage.SKIP.getAnimation();
+		skipButton = new MenuButton(skip, width - skip.getWidth() / 2f, height - (skip.getHeight() / 2f));
 		} else {
-			Image skip = GameImage.SKIP.getImage();
-			skipButton = new MenuButton(skip, width - skip.getWidth() / 2f, height - (skip.getHeight() / 2f));
+		Image skip = GameImage.SKIP.getImage();
+		skipButton = new MenuButton(skip, width - skip.getWidth() / 2f, height - (skip.getHeight() / 2f));
 		}
 		skipButton.setHoverAnimationDuration(350);
 		skipButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
@@ -2073,32 +2145,32 @@ public class Game extends BasicGameState {
 	 * Loads the beatmap video (if any).
 	 * @param offset the time to seek to (in milliseconds)
 	 */
-	private void loadVideo(int offset) {
-		// close previous video
-		if (video != null) {
-			try {
-				video.close();
-			} catch (IOException e) {}
-			video = null;
-		}
-
-		if (!Options.isBeatmapVideoEnabled() || beatmap.video == null || !beatmap.video.isFile())
-			return;
-
-		// load video
-		int time = Math.max(0, offset);
-		try {
-			video = new Video(beatmap.video);
-			video.seek(time);
-			video.resume();
-			videoSeekTime = time;
-		} catch (Exception e) {
-			video = null;
-			videoSeekTime = 0;
-			Log.error(e);
-			UI.getNotificationManager().sendNotification("Failed to load beatmap video.\nSee log for details.", Color.red);
-		}
-	}
+//	private void loadVideo(int offset) {
+//		// close previous video
+//		if (video != null) {
+//			try {
+//				video.close();
+//			} catch (IOException e) {}
+//			video = null;
+//		}
+//
+//		if (!Options.isBeatmapVideoEnabled() || beatmap.video == null || !beatmap.video.isFile())
+//			return;
+//
+//		// load video
+//		int time = Math.max(0, offset);
+//		try {
+//			video = new Video(beatmap.video);
+//			video.seek(time);
+//			video.resume();
+//			videoSeekTime = time;
+//		} catch (Exception e) {
+//			video = null;
+//			videoSeekTime = 0;
+//			Log.error(e);
+//			UI.getNotificationManager().sendNotification("Failed to load beatmap video.\nSee log for details.", Color.red);
+//		}
+//	}
 
 	/**
 	 * Set map modifiers.

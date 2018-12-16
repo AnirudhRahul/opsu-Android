@@ -174,7 +174,7 @@ public class Splash extends BasicGameState {
 
 						// import skins
 						SkinUnpacker.unpackAllFiles(importDir, Options.getSkinRootDir());
-						SkinUnpacker.unpackAllFiles(DeviceInfo.info.getDownloadDir(), Options.getSkinRootDir());
+						SkinUnpacker.unpackAllFiles(new File(DeviceInfo.info.getDownloadDir()), Options.getSkinRootDir());
 
 						// import replays
 						ReplayImporter.importAllReplaysFromDir(importDir);

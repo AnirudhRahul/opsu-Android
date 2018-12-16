@@ -302,7 +302,7 @@ public class ButtonMenu extends BasicGameState {
 			}
 		},
 		/** The "About" screen. */
-		ABOUT (new Button[] { Button.ABOUT_WEBSITE, Button.ABOUT_REPOSITORY, Button.ABOUT_REPORT, Button.ABOUT_CREDITS, Button.ABOUT_CLOSE }) {
+		ABOUT (new Button[] { Button.ABOUT_WEBSITE, Button.ABOUT_REPOSITORY, Button.ABOUT_REPORT, Button.ABOUT_CREDITS, Button.ABOUT_PRIVACY, Button.ABOUT_CLOSE }) {
 			@Override
 			public String[] getTitle(GameContainer container, StateBasedGame game) {
 				String version = Updater.get().getCurrentVersion();
@@ -682,6 +682,18 @@ public class ButtonMenu extends BasicGameState {
 				SoundController.playSound(SoundEffect.MENUHIT);
 				try {
 					Desktop.getDesktop().browse(OpsuConstants.CREDITS_URI);
+				} catch (Exception e) {
+					UI.getNotificationManager().sendNotification("The web page could not be opened.", Color.red);
+				}
+				game.enterState(Opsu.STATE_MAINMENU, new EmptyTransition(), new FadeInTransition());
+			}
+		},
+		ABOUT_PRIVACY ("View Privacy Policy", Color.lightorange) {
+			@Override
+			public void click(GameContainer container, StateBasedGame game) {
+				SoundController.playSound(SoundEffect.MENUHIT);
+				try {
+					Desktop.getDesktop().browse(OpsuConstants.PRIVACY_URI);
 				} catch (Exception e) {
 					UI.getNotificationManager().sendNotification("The web page could not be opened.", Color.red);
 				}

@@ -331,22 +331,23 @@ public class Replay {
 					// LZMA-encoded replay data
 					if (frames != null && frames.length > 0) {
 						// build full frame string
-						NumberFormat nf;
-						try{
-							nf = new DecimalFormat("###.#####",DecimalFormatSymbols.getInstance(Locale.forLanguageTag("en_US")));
-						}catch (Exception e){
-							nf = new DecimalFormat("###.#####");
-						}
+						try {
+							NumberFormat nf;
+							try {
+								nf = new DecimalFormat("###.#####", DecimalFormatSymbols.getInstance(Locale.forLanguageTag("en_US")));
+							} catch (NoSuchMethodError|Exception e) {
+								nf = new DecimalFormat("###.#####");
+							}
 
-						sb = new StringBuilder();
-						for (int i = 0; i < frames.length; i++) {
-							ReplayFrame frame = frames[i];
-							sb.append(String.format("%d|%s|%s|%d,",
-									frame.getTimeDiff(), nf.format(frame.getX()),
-									nf.format(frame.getY()), frame.getKeys()));
-						}
-						sb.append(String.format("%s|0|0|%d", SEED_STRING, seed));
-
+							sb = new StringBuilder();
+							for (int i = 0; i < frames.length; i++) {
+								ReplayFrame frame = frames[i];
+								sb.append(String.format("%d|%s|%s|%d,",
+										frame.getTimeDiff(), nf.format(frame.getX()),
+										nf.format(frame.getY()), frame.getKeys()));
+							}
+							sb.append(String.format("%s|0|0|%d", SEED_STRING, seed));
+						}catch (Exception e){}
 						// get bytes from string
 						CharsetEncoder encoder = Charset.forName("US-ASCII").newEncoder();//StandardCharsets.US_ASCII.newEncoder();
 						CharBuffer buffer = CharBuffer.wrap(sb);

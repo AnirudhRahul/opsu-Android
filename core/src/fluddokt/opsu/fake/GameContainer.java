@@ -87,13 +87,9 @@ public class GameContainer extends GUIContext{
 		return Graphics.getGraphics();
 	}
 
-	public int getScreenWidth() {
-		return Gdx.graphics.getDesktopDisplayMode().width;
-	}
+	public int getScreenWidth() {return Gdx.graphics.getDesktopDisplayMode().width;}
 
-	public int getScreenHeight() {
-		return Gdx.graphics.getDesktopDisplayMode().height;
-	}
+	public int getScreenHeight() {return Gdx.graphics.getDesktopDisplayMode().height;}
 
 	public void setVSync(boolean b) {
 		Gdx.graphics.setVSync(b);

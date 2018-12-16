@@ -18,7 +18,6 @@
 
 package itdelatrisu.opsu;
 
-import itdelatrisu.opsu.video.FFmpeg;
 
 import java.io.File;
 import java.io.FileOutputStream;

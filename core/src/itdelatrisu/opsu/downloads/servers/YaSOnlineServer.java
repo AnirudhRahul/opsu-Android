@@ -17,10 +17,8 @@
  */
 package itdelatrisu.opsu.downloads.servers;
 
-import fluddokt.opsu.fake.Log;
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.Utils;
-import itdelatrisu.opsu.downloads.DownloadNode;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -33,9 +31,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.downloads.DownloadNode;
 /*
 import org.newdawn.slick.util.Log;
 */
@@ -103,7 +104,7 @@ public class YaSOnlineServer extends DownloadServer {
 			Utils.setSSLCertValidation(false);
 
 			// read JSON
-			String search = String.format(DOWNLOAD_URL, beatmapSetID);
+			String search = String.format(Locale.US,DOWNLOAD_URL, beatmapSetID);
 			JSONObject json = Utils.readJsonObjectFromUrl(new URL(search));
 			JSONObject results;
 			if (json == null ||
@@ -119,7 +120,7 @@ public class YaSOnlineServer extends DownloadServer {
 			String key = (String) keys.next();
 			JSONObject item = results.getJSONObject(key);
 			String downloadLink = item.getString("downloadLink");
-			return String.format(DOWNLOAD_FETCH_URL, downloadLink);
+			return String.format(Locale.US,DOWNLOAD_FETCH_URL, downloadLink);
 		} catch (MalformedURLException | UnsupportedEncodingException e) {
 			ErrorHandler.error(String.format("Problem retrieving download URL for beatmap '%d'.", beatmapSetID), e, true);
 			return null;

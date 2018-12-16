@@ -18,10 +18,11 @@
 
 package itdelatrisu.opsu.downloads.servers;
 
-import itdelatrisu.opsu.downloads.DownloadNode;
-
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
+
+import itdelatrisu.opsu.downloads.DownloadNode;
 
 /**
  * Abstract class for beatmap download servers.
@@ -74,7 +75,7 @@ public abstract class DownloadServer {
 	 * @return the URL string
 	 */
 	public String getPreviewURL(int beatmapSetID) {
-		return String.format(PREVIEW_URL, beatmapSetID);
+		return String.format(Locale.US,PREVIEW_URL, beatmapSetID);
 	}
 
 	/**

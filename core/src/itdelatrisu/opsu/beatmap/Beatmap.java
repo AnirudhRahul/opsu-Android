@@ -21,10 +21,12 @@ package itdelatrisu.opsu.beatmap;
 import com.badlogic.gdx.utils.Array;
 
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
 
 import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.File;
+import fluddokt.opsu.fake.Graphics;
 import fluddokt.opsu.fake.Image;
 import fluddokt.opsu.fake.Integer2;
 import fluddokt.opsu.fake.Log;
@@ -353,7 +355,14 @@ public class Beatmap implements Comparable<Beatmap> {
 	 * @param stretch if true, stretch to screen dimensions; otherwise, maintain aspect ratio
 	 * @return true if successful, false if any errors were produced
 	 */
-	public boolean drawBackground(int width, int height, float offsetX, float offsetY, float alpha, boolean stretch) {
+	public boolean drawBackground(int width, int height, float offsetX, float offsetY, float alpha, boolean stretch, Graphics g, boolean withVideo) {
+
+		if(withVideo){
+			g.clearAlphaMap();
+			return true;
+		}
+
+
 		if (bg == null)
 			return false;
 
@@ -364,7 +373,6 @@ public class Beatmap implements Comparable<Beatmap> {
 		Image bgImage = imageLoader.getImage();
 		if (bgImage == null)
 			return true;
-
 		int swidth = width;
 		int sheight = height;
 		if (!stretch) {
@@ -535,7 +543,7 @@ public class Beatmap implements Comparable<Beatmap> {
 		if (sliderBorder == null)
 			return null;
 
-		return String.format("%d,%d,%d", sliderBorder.getRed(), sliderBorder.getGreen(), sliderBorder.getBlue());
+		return String.format(Locale.US,"%d,%d,%d", sliderBorder.getRed(), sliderBorder.getGreen(), sliderBorder.getBlue());
 	}
 
 	/**

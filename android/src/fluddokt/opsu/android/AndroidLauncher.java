@@ -1,12 +1,24 @@
 package fluddokt.opsu.android;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
@@ -17,46 +29,62 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
-import com.onesignal.OneSignal;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.io.IOException;
+import java.util.Arrays;
 
 import fluddokt.ex.DeviceInfo;
 import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.ex.InterstitialAdLoader;
-import fluddokt.opsu.fake.File;
+import fluddokt.ex.VideoLoader;
 import fluddokt.opsu.fake.GameOpsu;
-import com.onesignal.OneSignal;
 
-public class AndroidLauncher extends AndroidApplication {
-	final String identityPool="us-east-1:db541cf4-1b41-4045-b60f-adeaa6b9cfeb";
-	final String REWARD_VIDEO_ID="ca-app-pub-4238071175751641/9918175716";
+public class AndroidLauncher extends AndroidApplication implements SurfaceHolder.Callback {
+	final String identityPool="";
 	private InterstitialAd mInterstitialAd;
-//	private RewardedVideoAd mRewardedVideoAd;
-	private ExecutorService executorService;
 	private SharedPreferences prefs;
-	private SharedPreferences.Editor editor;
+//Media Player Variables
+	String path;
+	private MediaPlayer mp;
+	private SurfaceView surfaceView;
+	private SurfaceHolder holder;
+	private String preparedFile="";
+	private boolean setupComplete=false;
+	public enum PlayerState{SETUP,READY};
+	PlayerState state=null;
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
 		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
+		config.r=8;
+		config.g=8;
+		config.b=8;
+		config.a=8;
+
+
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+
+			}
+			else{
+				requestPermissionWrite();
+				requestPermissionRead();
+			}
+		}
+
 		config.useImmersiveMode = true;
 		config.useWakelock = true;
-		OneSignal.startInit(this)
-				.inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
-				.unsubscribeWhenNotificationsAreDisabled(true)
-				.init();
-		executorService= Executors.newSingleThreadExecutor();
+//		OneSignal.startInit(this)
+//				.inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
+//				.unsubscribeWhenNotificationsAreDisabled(true)
+//				.init();
 		prefs= PreferenceManager.getDefaultSharedPreferences(this);
-		editor=prefs.edit();
-		OneSignal.startInit(this)
-				.inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
-				.unsubscribeWhenNotificationsAreDisabled(true)
-				.init();
+//		OneSignal.startInit(this)
+//				.inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
+//				.unsubscribeWhenNotificationsAreDisabled(true)
+//				.init();
 		DeviceInfo.info = new DeviceInfo() {
 			@Override
 			public String getInfo() {
@@ -73,16 +101,43 @@ public class AndroidLauncher extends AndroidApplication {
 			}
 
 			@Override
-			public File getDownloadDir() {
+			public String getDownloadDir() {
 
-				return new File(String.valueOf(new FileHandle(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))));
+				return (String.valueOf(new FileHandle(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))));
 			}
 
+			@Override
+			public boolean hasPhysicalButtons(){
+				return ViewConfiguration.get(getApplicationContext()).hasPermanentMenuKey();
+			}
 
 			@Override
 			public boolean isMusicPlaying(){
 				AudioManager a=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
 				return a.isMusicActive();
+			}
+
+			@Override
+			public boolean isSynced(){
+				SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+				return preferences.getBoolean("Sync", false);
+
+			}
+
+			@Override
+			public void setSynced(boolean in){
+				SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+				SharedPreferences.Editor editor = preferences.edit();
+				editor.putBoolean("Sync", in);
+				editor.apply();
+			}
+			@Override
+			public boolean shownNotification(String name){
+				return prefs.getBoolean(name,false);
+			}
+			@Override
+			public void setShownNotification(String name,boolean val){
+				prefs.edit().putBoolean(name,val).apply();
 			}
 
 		};
@@ -99,28 +154,11 @@ public class AndroidLauncher extends AndroidApplication {
 
 		};
 
-//
-//		final AlertDialog alertDialog=new AlertDialog.Builder(getApplicationContext())
-//				.setTitle("Reward Video")
-//				.setMessage("Would you like to watch a video for 15 minutes ad-free?")
-//				.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-//					@Override
-//					public void onClick(DialogInterface dialog, int which) {
-//						RewardVideoAdLoader.ad.loadAndShow();
-//					}
-//				}).setNegativeButton("No", new DialogInterface.OnClickListener() {
-//			@Override
-//			public void onClick(DialogInterface dialogInterface, int i) {
-//				InterstitialAdLoader.ad.loadAndShow();
-//			}
-//		}).create();
 		//Initialize interstitial ads
 		MobileAds.initialize(this,
-				"ca-app-pub-4238071175751641~8789389898");
-		//mRewardedVideoAd = MobileAds.getRewardedVideoAdInstance(this);
-		//resetVideo();
+				"");
 		mInterstitialAd = new InterstitialAd(this);
-		mInterstitialAd.setAdUnitId("ca-app-pub-4238071175751641/8635925779");
+		mInterstitialAd.setAdUnitId("");
 		//Send failure message if ad fails to load
 		mInterstitialAd.setAdListener(new AdListener(){
 			@Override
@@ -148,6 +186,7 @@ public class AndroidLauncher extends AndroidApplication {
 			@Override
 			public void loadAndShow(){
 				try {
+
 					runOnUiThread(new Runnable() {
 						public void run() {
 							//If the ad isn't loaded, load it, and then show it immediately after its loaded
@@ -155,7 +194,7 @@ public class AndroidLauncher extends AndroidApplication {
 								if (!mInterstitialAd.isLoading()) {
 									AdRequest interstitialRequest = new AdRequest.Builder().build();
 									mInterstitialAd.loadAd(interstitialRequest);
-									InterstitialAdLoader.ad.sendNotification("Loading...");
+//									InterstitialAdLoader.ad.sendNotification("Loading...");
 								}
 								//Show the ad immediately after its loaded
 								mInterstitialAd.setAdListener(new AdListener() {
@@ -180,105 +219,202 @@ public class AndroidLauncher extends AndroidApplication {
 				}
 				catch (Exception e) {}
 			}
-			//Sets the action that occurs when the ad is closed
+
+			};
+		surfaceView = findViewById(R.id.video);
+		holder = surfaceView.getHolder();
+		holder.addCallback(this);
+//		holder.setFormat();
+		mp = new MediaPlayer();
+		mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 			@Override
-			public void onShowCompleted(final Callable<Boolean> c){
+			public void onPrepared(MediaPlayer mp) {
+				setupComplete=true;
+			}
+		});
+		state=PlayerState.READY;
+		VideoLoader.loader = new VideoLoader(){
+
+
+			@Override
+			public String setDataSource(final String filepath) throws IOException {
+				try {
+					mp.setDataSource(filepath);
+					preparedFile = filepath;
+					return "True";
+				}catch (Exception e){return "False\n"+e.getMessage();}
+			}
+
+			@Override
+			public void pause(){
+				mp.pause();
+//				state=PlayerState.PAUSED;
+			}
+
+			@Override
+			public void start(){
+				mp.start();
+				setupComplete=false;
+//				state=PlayerState.PLAYING;
+			}
+
+			public void startFrom0(){
+				seek(0);
+			}
+
+			@Override
+			public void stop(){
+				mp.stop();
+//				state=PlayerState.STOPPED;
+			}
+
+			@Override
+			public String getPreparedFile(){
+				return preparedFile;
+			}
+
+			@Override
+			public void reset(){
+				mp.reset();
+//				state=PlayerState.UNINITIALIZED;
+			}
+
+			@Override
+			public String adjustBrightness(final int brightness){
 				try {
 					runOnUiThread(new Runnable() {
 						public void run() {
-							mInterstitialAd.setAdListener(new AdListener(){
+							surfaceView.setBackgroundColor(Color.argb(256-brightness,0, 0, 0));
+						}
+					});
+				}
+				catch (Exception e) {return e.toString();}
+				return "True";
+			}
+
+			@Override
+			public  boolean isPlaying(){return mp.isPlaying();}
+			@Override
+			public boolean setupComplete(){return setupComplete;}
+
+			@Override
+			public String setupVideo(String path) {
+				setupComplete=false;
+					try {
+						if(state!=PlayerState.READY) {
+							mp.reset();
+							mp.release();
+							mp = new MediaPlayer();
+							try{
+								mp.setDisplay(holder);
+							}catch (Exception e){mp = new MediaPlayer();}
+							mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 								@Override
-								public void onAdClosed() {
-									super.onAdClosed();
-									execute(c);
-									AdRequest interstitialRequest = new AdRequest.Builder().build();
-									mInterstitialAd.loadAd(interstitialRequest);
-								}
+								public void onPrepared(MediaPlayer mp) {
+									setupComplete = true;
+									}
 							});
+						}
+						state = PlayerState.SETUP;
+						mp.setDataSource(path);
+						mp.prepareAsync();
+						return "True";
+					}catch (Exception e){
+						return e.toString()+"\n"+Arrays.toString(e.getStackTrace());
+					}
+
+			}
+
+			@Override
+			public void makeInvisible(){
+				try {
+					runOnUiThread(new Runnable() {
+						public void run() {
+							surfaceView.setVisibility(View.INVISIBLE);
 						}
 					});
 				}
 				catch (Exception e) {}
 			}
-			};
-//		RewardVideoAdLoader.ad = new RewardVideoAdLoader(){
-//			@Override
-//			public void init(){
-//				RewardVideoAdLoader.ad.setLastAdWatched(prefs.getLong("lastAd",Long.MIN_VALUE));
-//			}
-//			//Check whether or not the user is within their 30 min ad free time
-//			@Override
-//			public void showAds(){
-//				if(RewardVideoAdLoader.ad.getLastAdWatched()-new Date().getTime()<1800000)
-//					return;
-//				else{
-//					try {
-//						runOnUiThread(new Runnable() {
-//							public void run() {
-//								alertDialog.show();
-//							}
-//						});
-//					}catch (Exception e){}
-//
-//				}
-//			}
-//			//Load ad
-//			@Override
-//			public void load(){
-//				try {
-//					runOnUiThread(new Runnable() {
-//						public void run() {
-//							if(!mRewardedVideoAd.isLoaded())
-//								mRewardedVideoAd.loadAd(REWARD_VIDEO_ID, new AdRequest.Builder().build());
-//						}
-//					});
-//				}
-//				catch (Exception e) {}
-//
-//			}
-//			@Override
-//			public void loadAndShow(){
-//				try {
-//					runOnUiThread(new Runnable() {
-//						public void run() {
-//							//If the ad isn't loaded, load it, and then show it immediately after its loaded
-//							if(!mRewardedVideoAd.isLoaded()){
-//								mRewardedVideoAd.loadAd(REWARD_VIDEO_ID, new AdRequest.Builder().build());
-//								//Show the ad immediately after its loaded
-//								showVideoWhenLoaded();
-//								resetVideo();
-//							}
-//							//If the ad is loaded show the add
-//							else
-//								mRewardedVideoAd.show();
-//						}
-//					});
-//				}
-//				catch (Exception e) {}
-//			}
-//			//Sets the action that occurs when the ad is closed
-//
-//		};
 
-		initialize(new GameOpsu(), config);
-	}
-	//Execute a callable with a 1.5s time limit
-	private boolean execute(Callable<Boolean> c){
-		Future<Boolean> task = executorService.submit(c);
-		try {
-			return task.get(1500, TimeUnit.MILLISECONDS);
-		} catch (Exception e) {
-			return false;
+			@Override
+			public void makeVisible(){
+				try {
+					runOnUiThread(new Runnable() {
+						public void run() {
+							surfaceView.setVisibility(View.VISIBLE);
+						}
+					});
+				}
+				catch (Exception e) {}
+			}
+
+			@Override
+			public void seek(int ms){
+//				state=PlayerState.SEEKING;
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					mp.seekTo(ms,MediaPlayer.SEEK_CLOSEST);
+				}
+				else{
+					mp.seekTo(ms);
+				}
+
+			}
+
+			@Override
+			public String prepare() throws IOException {
+				try {
+//					state = PlayerState.PREPARING;
+					mp.prepareAsync();
+					return "True";
+				}catch (Exception e){return "False\n"+e.toString();}
+			}
+
+
+			@Override
+			public String getState(){return state.toString();}
+		};
+
+//			initialize(new GameOpsu(), config);
+		RelativeLayout layout = findViewById(R.id.layout);
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+		config.r = config.g = config.b = 8;
+		config.a = 8;
+		config.useGLSurfaceView20API18 = true;
+
+		layout.addView(initializeForView(new GameOpsu(),config),params);
+
+		if (graphics.getView() instanceof SurfaceView) {
+			SurfaceView glView = (SurfaceView) graphics.getView();
+			glView.getHolder().setFormat(PixelFormat.RGBA_8888);
+			glView.setZOrderOnTop(true);
 		}
 	}
-	@Override
-	protected void onRestart(){
-		super.onRestart();
-//		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
-//		config.useImmersiveMode = true;
-//		config.useWakelock = true;
-//		initialize(new GameOpsu(), config);
+	private void requestPermissionWrite() {
+		if (!ActivityCompat.shouldShowRequestPermissionRationale(AndroidLauncher.this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE))
+			ActivityCompat.requestPermissions(AndroidLauncher.this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
 	}
 
+	private void requestPermissionRead() {
+		if (!ActivityCompat.shouldShowRequestPermissionRationale(AndroidLauncher.this, Manifest.permission.READ_EXTERNAL_STORAGE))
+			ActivityCompat.requestPermissions(AndroidLauncher.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+	}
 
+	@Override
+	public void surfaceCreated(SurfaceHolder holder) {
+//		Toast.makeText(getApplicationContext(),"Created Surface",Toast.LENGTH_LONG).show();
+		mp.setDisplay(holder);
+	}
+
+	@Override
+	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+//		Toast.makeText(getApplicationContext(),"Changed Surface",Toast.LENGTH_LONG).show();
+
+	}
+
+	@Override
+	public void surfaceDestroyed(SurfaceHolder holder) {
+//		Toast.makeText(getApplicationContext(),"Destroyed Surface",Toast.LENGTH_LONG).show();
+	}
 }

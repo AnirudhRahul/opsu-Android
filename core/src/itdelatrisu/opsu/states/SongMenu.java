@@ -30,7 +30,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import fluddokt.ex.DeviceInfo;
 import fluddokt.ex.DynamoDB.DynamoDB;
+import fluddokt.ex.VideoLoader;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.FadeInTransition;
 import fluddokt.opsu.fake.Animation;
@@ -626,7 +628,7 @@ public class SongMenu extends BasicGameState {
 			parallaxY = -offset / 2f * (mouseY - height / 2) / (height / 2);
 		}
 		if (!lastBgAlpha.isFinished() && lastFadeBeatmap != null && lastFadeBeatmap.hasLoadedBackground())
-			lastFadeBeatmap.drawBackground(width, height, parallaxX, parallaxY, lastBgAlpha.getValue(), true);
+			lastFadeBeatmap.drawBackground(width, height, parallaxX, parallaxY, lastBgAlpha.getValue(), true,g,false);
 		if (playfieldAlpha.getTime() > 0) {
 			Image bg = GameImage.MENU_BG.getImage();
 			if (Options.isParallaxEnabled()) {
@@ -640,7 +642,7 @@ public class SongMenu extends BasicGameState {
 			}
 		}
 		if (lastBeatmap != null && lastBeatmap.hasLoadedBackground())
-			lastBeatmap.drawBackground(width, height, parallaxX, parallaxY, bgAlpha.getValue(), true);
+			lastBeatmap.drawBackground(width, height, parallaxX, parallaxY, bgAlpha.getValue(), true,g,false);
 
 		// star stream
 		starStream.draw();
@@ -1254,6 +1256,12 @@ public class SongMenu extends BasicGameState {
 			}
 		}
 	}
+	public String getPreparedVideo(){
+		if(VideoLoader.loader.getState().equals("INITIALIZED"))
+			return VideoLoader.loader.getPreparedFile();
+		else
+			return "";
+	}
 
 	@Override
 	public void keyPressed(int key, char c) {
@@ -1836,7 +1844,7 @@ public class SongMenu extends BasicGameState {
 			scoreMap = ScoreDB.getMapSetScores(focusNode.getSelectedBeatmap());
 
 	}
-
+	private boolean setupError=false;
 
 	/**
 	 * Sets a new focus node.
@@ -1856,7 +1864,6 @@ public class SongMenu extends BasicGameState {
 		songChangeTimer.setTime(0);
 		musicIconBounceTimer.setTime(0);
 		BeatmapSetNode oldFocus = focusNode;
-
 		// expand node before focusing it
 		int expandedIndex = BeatmapSetList.get().getExpandedIndex();
 		if (node.index != expandedIndex) {
@@ -1874,18 +1881,29 @@ public class SongMenu extends BasicGameState {
 			if (startNode != null && startNode.index == expandedIndex)
 				startNode = BeatmapSetList.get().getBaseNode(startNode.index);
 		}
-
 		// check beatmap index bounds
 		int length = node.getBeatmapSet().size();
 		if (beatmapIndex < 0 || beatmapIndex > length - 1)  // set a random index
 			beatmapIndex = (int) (Math.random() * length);
-
 		// focus the node
 		focusNode = BeatmapSetList.get().getNode(node, beatmapIndex);
 		Beatmap beatmap = focusNode.getSelectedBeatmap();
 		if (beatmap.timingPoints == null) {
 			// load timing points so we can pulse the logo
 			BeatmapDB.load(beatmap, BeatmapDB.LOAD_ARRAY);
+		}
+
+		boolean useVideo=beatmap.video!=null&&Options.isBeatmapVideoEnabled()&&beatmap.video.isFile();
+		if(!DeviceInfo.info.shownNotification("supportsVideo")){
+			UI.getNotificationManager().sendNotification("Opsu now supports beatmaps with background video!");
+			DeviceInfo.info.setShownNotification("supportsVideo",true);
+		}
+		if(useVideo) {
+			VideoLoader.loader.adjustBrightness(Options.GameOption.VIDEO_BRIGHTNESS.getIntegerValue());
+			String output=VideoLoader.loader.setupVideo(beatmap.video.getAbsolutePath());
+			setupError=!(output.equals("True"));
+			if(setupError)
+				UI.getNotificationManager().sendNotification("Error Code:"+output);
 		}
 		MusicController.play(beatmap, false, preview);
 
@@ -1943,7 +1961,9 @@ public class SongMenu extends BasicGameState {
 
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
 			//ErrorHandler.error("Connection error",e,true);
-			UI.getNotificationManager().sendNotification("Connection failed");
+			UI.getNotificationManager().sendNotification("beatmapMID:"+focusNode.getSelectedBeatmap().beatmapID);
+			UI.getNotificationManager().sendNotification(e.getLocalizedMessage());
+			UI.getNotificationManager().sendNotification("Connection failed:"+e.getMessage()+"");
 			task.cancel(true);
 			leaderboardMenu.setSelectedIndex(0);
 			updateScoreMap();
@@ -2179,7 +2199,9 @@ public class SongMenu extends BasicGameState {
 	/**
 	 * Starts the game.
 	 */
-	private void startGame() {
+	private int errorPressCounter=0;
+	private void startGame(){
+
 		if (MusicController.isTrackLoading())
 			return;
 
@@ -2188,6 +2210,22 @@ public class SongMenu extends BasicGameState {
 			UI.getNotificationManager().sendBarNotification("Unable to load the beatmap audio.");
 			return;
 		}
+		boolean useVideo=beatmap.video!=null&&Options.isBeatmapVideoEnabled()&&beatmap.video.isFile();
+		boolean disableVideo=false;
+		if(errorPressCounter>=1){
+			disableVideo=true;
+			UI.getNotificationManager().sendNotification("Disabled video for this map.",Color.cyan);
+			errorPressCounter=0;
+		}
+		else if(useVideo&&(setupError||!VideoLoader.loader.setupComplete())){
+			UI.getNotificationManager().sendNotification("Error loading beatmap video.",Color.cyan);
+			errorPressCounter++;
+			return;
+		}
+
+
+
+
 
 		// turn on "auto" mod if holding "ctrl" key
 		if (input.isKeyDown(Input.KEY_RCONTROL) || input.isKeyDown(Input.KEY_LCONTROL)) {
@@ -2201,6 +2239,7 @@ public class SongMenu extends BasicGameState {
 		gameState.loadBeatmap(beatmap);
 		gameState.setPlayState(Game.PlayState.FIRST_LOAD);
 		gameState.setReplay(null);
+		gameState.setDisableVideo(disableVideo);
 		game.enterState(Opsu.STATE_GAME, new EasedFadeOutTransition(), new FadeInTransition());
 	}
 }

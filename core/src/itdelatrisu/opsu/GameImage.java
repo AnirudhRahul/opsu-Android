@@ -20,8 +20,8 @@ package itdelatrisu.opsu;
 
 import com.badlogic.gdx.utils.Array;
 
-
 import java.util.ArrayList;
+import java.util.Locale;
 
 import fluddokt.opsu.fake.Animation;
 import fluddokt.opsu.fake.File;
@@ -47,6 +47,14 @@ public enum GameImage {
 	CURSOR ("cursor", "png"),
 	CURSOR_MIDDLE ("cursormiddle", "png"),
 	CURSOR_TRAIL ("cursortrail", "png"),
+
+	// Tutorial Slideshow
+	SLIDESHOW_1("1slideshow", "jpg"),
+	SLIDESHOW_2("2slideshow", "jpg"),
+	SLIDESHOW_3("3slideshow", "jpg"),
+	SLIDESHOW_4("4slideshow", "jpg"),
+	SLIDESHOW_5("5slideshow", "jpg"),
+	SLIDESHOW_6("6slideshow", "jpg"),
 
 	// Game
 	INPUTOVERLAY_KEY ("inputoverlay-key", "png"),
@@ -593,9 +601,9 @@ public enum GameImage {
 	private static String getImageFileName(String filename, File dir, byte type, boolean dirOnly) {
 		Array<String> names = new Array<String>(2);
 		if ((type & IMG_PNG) != 0)
-			names.add(String.format("%s.png", filename));
+			names.add(String.format(Locale.US,"%s.png", filename));
 		if ((type & IMG_JPG) != 0)
-			names.add(String.format("%s.jpg", filename));
+			names.add(String.format(Locale.US,"%s.jpg", filename));
 		int size = names.size;
 
 		// look through directory
@@ -854,7 +862,7 @@ public enum GameImage {
 				int i = 0;
 				while (true) {
 					// look for next image
-					String filenameFormatted = String.format(filenameFormat + suffix, i++);
+					String filenameFormatted = String.format(Locale.US,filenameFormat + suffix, i++);
 					String name = getImageFileName(filenameFormatted, dir, type, true);
 					if (name == null)
 						break;

@@ -19,9 +19,12 @@
 package itdelatrisu.opsu.states;
 
 
+import com.badlogic.gdx.Gdx;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 
 import fluddokt.ex.DeviceInfo;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
@@ -177,7 +180,7 @@ public class DownloadsMenu extends BasicGameState {
 	private MenuButton prevPage, nextPage;
 
 	/** Buttons. */
-	private MenuButton clearButton, importButton, resetButton, rankedButton;
+	private MenuButton clearButton, importButton, resetButton, rankedButton, tutorialButton;
 
 	/** Dropdown menu. */
 	private DropdownMenu<DownloadServer> serverMenu;
@@ -307,7 +310,7 @@ public class DownloadsMenu extends BasicGameState {
 			//Unzip and retrieve files
 			File[] dirs = OszUnpacker.unpackAllFiles(Options.getImportDir(), Options.getBeatmapDir());
 			if (dirs == null || dirs.length <=0) {
-				File dlDir = DeviceInfo.info.getDownloadDir();
+				File dlDir = new File(DeviceInfo.info.getDownloadDir());
 				if (dlDir != null)
 					dirs = OszUnpacker.unpackAllFiles(dlDir, Options.getBeatmapDir());
 			}
@@ -406,13 +409,19 @@ public class DownloadsMenu extends BasicGameState {
 		Image resetButtonImage = button.getScaledCopy((int) resetWidth - lrButtonWidth, (int) buttonHeight);
 		Image rankedButtonImage = button.getScaledCopy((int) rankedWidth - lrButtonWidth, (int) buttonHeight);
 		Image lowerButtonImage = button.getScaledCopy((int) lowerWidth - lrButtonWidth, (int) buttonHeight);
+		Image tutorialButtonImage = button.getScaledCopy((int) (lowerWidth - lrButtonWidth)*1.5f, (int) buttonHeight);
+
 		float resetButtonWidth = resetButtonImage.getWidth() + lrButtonWidth;
 		float rankedButtonWidth = rankedButtonImage.getWidth() + lrButtonWidth;
 		float lowerButtonWidth = lowerButtonImage.getWidth() + lrButtonWidth;
 		clearButton = new MenuButton(lowerButtonImage, buttonL, buttonR,
 				width * 0.75f + buttonMarginX + lowerButtonWidth / 2f, lowerButtonY);
+
 		importButton = new MenuButton(lowerButtonImage, buttonL, buttonR,
 				width - buttonMarginX - lowerButtonWidth / 2f, lowerButtonY);
+		tutorialButton = new MenuButton(tutorialButtonImage, buttonL, buttonR,
+				width * 0.75f + buttonMarginX + lowerButtonWidth, lowerButtonY+buttonHeight*1.4f);
+
 		resetButton = new MenuButton(resetButtonImage, buttonL, buttonR,
 				baseX + searchWidth + buttonMarginX + resetButtonWidth / 2f, topButtonY);
 		rankedButton = new MenuButton(rankedButtonImage, buttonL, buttonR,
@@ -420,10 +429,12 @@ public class DownloadsMenu extends BasicGameState {
 		clearButton.setText("Clear", Fonts.MEDIUM, Color.white);
 		importButton.setText("Import Maps", Fonts.MEDIUM, Color.white);
 		resetButton.setText("Reset", Fonts.MEDIUM, Color.white);
+		tutorialButton.setText("Tutorial", Fonts.MEDIUM, Color.white);
 		clearButton.setHoverFade();
 		importButton.setHoverFade();
 		resetButton.setHoverFade();
 		rankedButton.setHoverFade();
+		tutorialButton.setHoverFade();
 
 		// dropdown menu
 		int serverWidth = (int) (Fonts.MEDIUM.getWidth("@@@@@@")+10); //width * 0.12f;
@@ -461,10 +472,26 @@ public class DownloadsMenu extends BasicGameState {
 		serverMenu.setBorderColor(Color.black);
 		serverMenu.setChevronRightColor(Color.white);
 	}
-int bgIndex=-1;
+	int bgIndex=-1;
+	int slideShowIndex=-1;
+	GameImage[] slideShowList=new GameImage[]{GameImage.SLIDESHOW_1,GameImage.SLIDESHOW_2,GameImage.SLIDESHOW_3,GameImage.SLIDESHOW_4,GameImage.SLIDESHOW_5,GameImage.SLIDESHOW_6};
 	@Override
 	public void render(GameContainer container, StateBasedGame game, Graphics g)
 			throws SlickException {
+		if(slideShowIndex>=0){
+			Image cur=slideShowList[slideShowIndex].getImage();
+//			cur.draw(0,0,cur.getWidth(),cur.getHeight());
+			int width=Gdx.graphics.getWidth();
+			int height=Gdx.graphics.getHeight();
+			cur=cur.getScaledCopy(Math.min(1f*width/cur.getWidth(),1f*height/cur.getHeight()));
+			int diffWidth=width-cur.getWidth();
+			int diffHeight=height-cur.getHeight();
+			g.drawImage(cur,diffWidth/2,diffHeight/2);
+//			UI.getNotificationManager().sendBarNotification(""+slideShowIndex);
+			UI.draw(g);
+			return;
+		}
+
 		int width = container.getWidth();
 		int height = container.getHeight();
 		int mouseX = input.getMouseX(), mouseY = input.getMouseY();
@@ -568,6 +595,7 @@ int bgIndex=-1;
 		// buttons
 		clearButton.draw(Color.gray);
 		importButton.draw(Color.orange);
+		tutorialButton.draw(Color.cyan);
 		resetButton.draw(Color.red);
 		rankedButton.setText((rankedOnly) ? "Show Unranked" : "Hide Unranked", Fonts.MEDIUM, Color.white);
 		rankedButton.draw(Color.magenta);
@@ -622,7 +650,7 @@ int bgIndex=-1;
 		importButton.hoverUpdate(delta, mouseX, mouseY);
 		resetButton.hoverUpdate(delta, mouseX, mouseY);
 		rankedButton.hoverUpdate(delta, mouseX, mouseY);
-
+		tutorialButton.hoverUpdate(delta, mouseX, mouseY);
 		if (DownloadList.get() != null)
 			startDownloadIndexPos.setMinMax(0, DownloadNode.getInfoHeight() * (DownloadList.get().size() -  DownloadNode.maxDownloadsShown()));
 		startDownloadIndexPos.update(delta);
@@ -675,6 +703,13 @@ int bgIndex=-1;
 
 	@Override
 	public void mousePressed(int button, int x, int y) {
+		if(slideShowIndex>=0){
+			slideShowIndex++;
+			if(slideShowIndex==6)
+				slideShowIndex=-1;
+			return;
+		}
+
 		// check mouse button
 		if (button == Input.MOUSE_MIDDLE_BUTTON)
 			return;
@@ -734,7 +769,7 @@ int bgIndex=-1;
 											previewID = -1;
 											boolean playing = SoundController.playTrack(
 												url,
-												String.format("%d.mp3", node.getID()),
+												String.format(Locale.US,"%d.mp3", node.getID()),
 													new LineListener() {
 													@Override
 													public void update(LineEvent event) {
@@ -824,6 +859,15 @@ int bgIndex=-1;
 			importThread = new BeatmapImportThread();
 			importThread.start();
 			return;
+		}
+		if (tutorialButton.contains(x, y)) {
+			SoundController.playSound(SoundEffect.MENUCLICK);
+			slideShowIndex=0;
+//
+//			// import songs in new thread
+//			importThread = new BeatmapImportThread();
+//			importThread.start();
+//			return;
 		}
 		if (resetButton.contains(x, y)) {
 			SoundController.playSound(SoundEffect.MENUCLICK);
@@ -988,6 +1032,7 @@ int bgIndex=-1;
 		importButton.resetHover();
 		resetButton.resetHover();
 		rankedButton.resetHover();
+		tutorialButton.resetHover();
 		serverMenu.activate();
 		serverMenu.reset();
 		focusResult = -1;
@@ -1060,7 +1105,7 @@ int bgIndex=-1;
 				"Save the beatmap in the Import folder and then click \"Import All\":\n%s",
 				Options.getImportDir().getAbsolutePath()
 			);
-			if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+			if (false && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
 				// launch browser
 				try {
 					Desktop.getDesktop().browse(new URI(downloadURL));

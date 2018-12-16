@@ -18,19 +18,19 @@
 
 package itdelatrisu.opsu.beatmap;
 
-import fluddokt.opsu.fake.*;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
+import fluddokt.opsu.fake.File;
 import itdelatrisu.opsu.Utils;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.ui.UI;
 
-
 /*
 import java.io.File;
 */
-import java.io.FilenameFilter;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Unpacker for OSZ (ZIP) archives.
@@ -91,7 +91,7 @@ public class OszUnpacker {
 		files = null;
 
 		if (!dirs.isEmpty()) {
-			String text = String.format("Imported %d new beatmap pack%s.", dirs.size(), dirs.size() == 1 ? "" : "s");
+			String text = String.format(Locale.US,"Imported %d new beatmap pack%s.", dirs.size(), dirs.size() == 1 ? "" : "s");
 			UI.getNotificationManager().sendNotification(text);
 		}
 

@@ -22,9 +22,13 @@ import com.badlogic.gdx.math.Rectangle;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Stack;
 
+import fluddokt.ex.DeviceInfo;
+import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.ex.InterstitialAdLoader;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.FadeInTransition;
@@ -47,6 +51,7 @@ import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.beatmap.Beatmap;
 import itdelatrisu.opsu.beatmap.BeatmapSetList;
 import itdelatrisu.opsu.beatmap.BeatmapSetNode;
+import itdelatrisu.opsu.db.ScoreDB;
 import itdelatrisu.opsu.downloads.Updater;
 import itdelatrisu.opsu.options.OptionGroup;
 import itdelatrisu.opsu.options.Options;
@@ -61,6 +66,7 @@ import itdelatrisu.opsu.ui.StarFountain;
 import itdelatrisu.opsu.ui.UI;
 import itdelatrisu.opsu.ui.animations.AnimatedValue;
 import itdelatrisu.opsu.ui.animations.AnimationEquation;
+import itdelatrisu.opsu.user.User;
 import itdelatrisu.opsu.user.UserButton;
 import itdelatrisu.opsu.user.UserList;
 import itdelatrisu.opsu.user.UserSelectOverlay;
@@ -344,7 +350,7 @@ public class MainMenu extends BasicGameState {
 			parallaxY = -offset / 2f * (mouseY - height / 2) / (height / 2);
 		}
 		if (Options.isDynamicBackgroundEnabled() && beatmap != null &&
-			beatmap.drawBackground(width, height, parallaxX, parallaxY, bgAlpha.getValue(), true))
+			beatmap.drawBackground(width, height, parallaxX, parallaxY, bgAlpha.getValue(), true,g,false))
 			;
 		else {
 			Image bg = GameImage.MENU_BG.getImage();
@@ -388,7 +394,7 @@ public class MainMenu extends BasicGameState {
 			}
 			float t = musicInfoProgress.getValue();
 			int animX = (int) ((1f - t) * (musicInfoImg.getWidth() * 2));
-			String s = String.format("%s - %s", beatmap.getArtist(), beatmap.getTitle());
+			String s = String.format(Locale.US,"%s - %s", beatmap.getArtist(), beatmap.getTitle());
 			int sWidth = Fonts.MEDIUM.getWidth(s);
 			int margin = (int) (width * 0.01f);
 			int rectHeight = (int) musicInfoRect.getHeight();
@@ -465,7 +471,7 @@ public class MainMenu extends BasicGameState {
 		Colors.WHITE_FADE.a = textAlpha;
 		float marginX = UserButton.getWidth() + 8, topMarginY = 4;
 		Fonts.MEDIUM.drawString(marginX, topMarginY,
-			String.format("You have %d beatmaps available!", BeatmapSetList.get().getMapCount()),
+			String.format(Locale.US,"You have %d beatmaps available!", BeatmapSetList.get().getMapCount()),
 			Colors.WHITE_FADE
 		);
 		float lineHeight = Fonts.MEDIUM.getLineHeight() * 0.925f;
@@ -620,7 +626,7 @@ public class MainMenu extends BasicGameState {
 			UI.updateTooltip(delta, "Previous track", false);
 		else if (repoButton != null && repoButton.contains(mouseX, mouseY)) {
 			String version = Updater.get().getCurrentVersion();
-			String tooltip = String.format(
+			String tooltip = String.format(Locale.US,
 				"running %s %s\ncreated by %s",
 				OpsuConstants.PROJECT_NAME,
 				(version == null) ? "(unknown version)" : "v" + version,
@@ -642,7 +648,33 @@ public class MainMenu extends BasicGameState {
 	public void enter(GameContainer container, StateBasedGame game)
 			throws SlickException {
 		InterstitialAdLoader.ad.load();
-		UserList.get().removeInvalidUsers();
+//		UserList.get().removeInvalidUsers();
+//		UI.getNotificationManager().sendNotification(UserList.get().getUsers().toString());
+		if(!DeviceInfo.info.isSynced()&& Options.GameOption.SYNC_USER_INFO.getBooleanValue()) {
+			//Sync player info if the player is not playing as a guest
+			InterstitialAdLoader.ad.loadAndShow();
+			ArrayList<User> usersToSync=new ArrayList<>();
+			usersToSync.addAll(ScoreDB.getUsers());
+			for(User cur:usersToSync)
+				UI.getNotificationManager().sendNotification(cur.getName()+" "+cur.getPassword());
+
+			for(User cur:usersToSync)
+				if(!cur.getName().equals("Guest")&&DynamoDB.database.dataBaseContainsUsername(cur.getName())) {
+					User fromDB=DynamoDB.database.getUserFromDB(cur.getName());
+						if(fromDB.getScore()!=0) {
+							User mergedUser=DynamoDB.database.getUserFromDB(cur.getName()).mergeUser(cur);
+							//Update user locally as well
+							ScoreDB.updateUser(mergedUser);
+							DynamoDB.database.addUserToDataBase(mergedUser);
+						}
+						else
+							DynamoDB.database.addUserToDataBase(cur);
+				}
+			UserList.create();
+			UI.getNotificationManager().sendNotification("Account Info Synced");
+			DeviceInfo.info.setSynced(true);
+		}
+
 		float t = com.badlogic.gdx.Gdx.graphics.getWidth()/com.badlogic.gdx.Gdx.graphics.getPpiX();
 		System.out.println("screen size = "+t);
 		UI.enter();

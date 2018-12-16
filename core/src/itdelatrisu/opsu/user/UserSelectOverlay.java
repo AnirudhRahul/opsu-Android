@@ -23,6 +23,7 @@ import com.badlogic.gdx.utils.async.AsyncTask;
 import java.util.ArrayList;
 import java.util.List;
 
+import fluddokt.ex.DeviceInfo;
 import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.GameContainer;
@@ -32,6 +33,7 @@ import fluddokt.opsu.fake.SlickException;
 import fluddokt.opsu.fake.TextField;
 import fluddokt.opsu.fake.gui.AbstractComponent;
 import fluddokt.opsu.fake.gui.GUIContext;
+import itdelatrisu.opsu.ErrorHandler;
 import itdelatrisu.opsu.audio.SoundController;
 import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.options.Options;
@@ -654,7 +656,6 @@ public class UserSelectOverlay extends AbstractComponent {
 		SoundController.playSound(SoundEffect.MENUCLICK);
 		String name = newUser.getName();
 		String password=newUser.getPassword();
-		int icon = newUser.getIconId();
 		if (!UserList.get().isValidUserName(name)) {
 			String error = name.isEmpty() ? "Enter a name for the user." : "You can't use that name.";
 			UI.getNotificationManager().sendBarNotification(error);
@@ -672,31 +673,52 @@ public class UserSelectOverlay extends AbstractComponent {
 	}
 private class loginTask implements AsyncTask<Integer> {
 	@Override
-	public Integer call() throws Exception {
-		UserList.get().getUsers().clear();
-        String username = newUser.getName();
-        String password=newUser.getPassword();
-		boolean[] out=new boolean[2];
-		out[0]= DynamoDB.database.dataBaseContainsUsername(username);
-		out[1]=DynamoDB.database.dataBaseContainsUsernameAndPassword(username,password);
-		if(out[0]==true&&out[1]==true) {
-			UI.getNotificationManager().sendNotification("Logged in", Colors.GREEN);
-			UserList.get().createNewUser(username, password);
-			UserList.get().changeUser(username);
+	public Integer call() {
+		try {
+			UserList.get().getUsers().clear();
+			String username = newUser.getName();
+			String password = newUser.getPassword();
+			boolean[] out = new boolean[2];
+			out[0] = DynamoDB.database.dataBaseContainsUsername(username);
+			out[1] = DynamoDB.database.dataBaseContainsUsernameAndPassword(username, password);
+
+			if (out[1]) {
+				UI.getNotificationManager().sendNotification("Logged in", Colors.GREEN);
+				User userFromDB = DynamoDB.database.getUserFromDB(username);
+//			UI.getNotificationManager().sendNotification(UserList.get().getUsers().toString());
+				userFromDB.setPassword(password);
+				UserList.get().addUser(userFromDB);
+
+				//debug
+//				UI.getNotificationManager().sendNotification("UserInfo: " + userFromDB.getName());
+
+				UserList.get().changeUser(username);
+
+				if (!DeviceInfo.info.isSynced())
+					DeviceInfo.info.setSynced(true);
+
+			}
+			//Username exists but the password provided is incorrect
+			if (out[0] == true && out[1] == false) {
+				UI.getNotificationManager().sendNotification("Wrong Password(Username " + username + " already in use)", Colors.GREEN);
+				newUser.setName("");
+				newUser.setPassword("");
+			}
+			//Username does not exist, so new user is created
+			if (out[0] == false) {
+				User curUser = UserList.get().createNewUser(username, password);
+				DynamoDB.database.addUserToDataBase(curUser);
+				UserList.get().changeUser(username);
+				UI.getNotificationManager().sendNotification("Account Created", Colors.GREEN);
+				if (!DeviceInfo.info.isSynced())
+					DeviceInfo.info.setSynced(true);
+			}
+			listener.close(true);
+			return 0;
+		}catch (Exception e){
+			ErrorHandler.error("Error",e.getCause(),false);
 		}
-		if(out[0]==true&&out[1]==false) {
-			UI.getNotificationManager().sendNotification("Wrong Password(Username " + username + " already in use)", Colors.GREEN);
-			newUser.setName("");
-			newUser.setPassword("");
-		}
-		if(out[0]==false) {
-			UserList.get().createNewUser(username, password);
-			DynamoDB.database.addUserToDataBase(username,password);
-            UserList.get().changeUser(username);
-			UI.getNotificationManager().sendNotification("Account Created", Colors.GREEN);
-		}
-		listener.close(true);
-		return 0 ;
+		return 0;
 	}
 }
 	/** Prepares the user selection state. */
@@ -730,6 +752,7 @@ private class loginTask implements AsyncTask<Integer> {
 	private void prepareUserCreate() {
 		newUser.setName("");
 		newUser.setPassword("");
+		newUser.setHashedPassword("");
 		newUser.setIconId(UserList.DEFAULT_ICON);
 		textField.setText("");
         textFieldPassword.setText("");

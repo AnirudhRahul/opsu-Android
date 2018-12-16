@@ -17,11 +17,15 @@
  */
 
 package itdelatrisu.opsu.replay;
-import fluddokt.opsu.fake.*;
-import itdelatrisu.opsu.Utils;
 
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.Locale;
+
+import fluddokt.opsu.fake.File;
+import fluddokt.opsu.fake.Log;
 import itdelatrisu.opsu.ErrorHandler;
-
+import itdelatrisu.opsu.Utils;
 import itdelatrisu.opsu.beatmap.Beatmap;
 import itdelatrisu.opsu.beatmap.BeatmapSetList;
 import itdelatrisu.opsu.db.ScoreDB;
@@ -31,8 +35,6 @@ import itdelatrisu.opsu.ui.UI;
 /*
 import java.io.File;
 */
-import java.io.FilenameFilter;
-import java.io.IOException;
 /*
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -100,7 +102,7 @@ public class ReplayImporter {
 				ScoreDB.addScore(r.getScoreData(beatmap));
 
 				// move to replay directory
-				File moveToFile = new File(replayDir, String.format("%s.osr", r.getReplayFilename()));
+				File moveToFile = new File(replayDir, String.format(Locale.US,"%s.osr", r.getReplayFilename()));
 				try {
 					/*
 					Files.move(file.toPath(), moveToFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
