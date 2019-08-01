@@ -2,6 +2,7 @@ package fluddokt.opsu.android;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -12,7 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -20,11 +21,14 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import androidx.core.app.ActivityCompat;
+
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.badlogic.gdx.files.FileHandle;
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
@@ -38,9 +42,11 @@ import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.ex.InterstitialAdLoader;
 import fluddokt.ex.VideoLoader;
 import fluddokt.opsu.fake.GameOpsu;
+import io.fabric.sdk.android.Fabric;
+
 
 public class AndroidLauncher extends AndroidApplication implements SurfaceHolder.Callback {
-	final String identityPool="";
+	String identityPool;
 	private InterstitialAd mInterstitialAd;
 	private SharedPreferences prefs;
 //Media Player Variables
@@ -55,36 +61,30 @@ public class AndroidLauncher extends AndroidApplication implements SurfaceHolder
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
+
+//		Log.e("BruhBruh",""+Fabric.isInitialized());
+//		Fabric.with(this, new Crashlytics());
+		identityPool=getString(R.string.aws_identity);
 		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
-		config.r=8;
-		config.g=8;
-		config.b=8;
-		config.a=8;
+		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 
+		setContentView(R.layout.main);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-
+				Log.v("Permissions","Good");
 			}
 			else{
 				requestPermissionWrite();
 				requestPermissionRead();
 			}
 		}
-
 		config.useImmersiveMode = true;
 		config.useWakelock = true;
-//		OneSignal.startInit(this)
-//				.inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
-//				.unsubscribeWhenNotificationsAreDisabled(true)
-//				.init();
-		prefs= PreferenceManager.getDefaultSharedPreferences(this);
-//		OneSignal.startInit(this)
-//				.inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
-//				.unsubscribeWhenNotificationsAreDisabled(true)
-//				.init();
+
+		Log.e("BruhBruh",""+Fabric.isInitialized());
+
 		DeviceInfo.info = new DeviceInfo() {
 			@Override
 			public String getInfo() {
@@ -139,6 +139,19 @@ public class AndroidLauncher extends AndroidApplication implements SurfaceHolder
 			public void setShownNotification(String name,boolean val){
 				prefs.edit().putBoolean(name,val).apply();
 			}
+			@Override
+			public void reportError(Throwable e){
+//                Toast.makeText(getApplicationContext(), "Bruh",Toast.LENGTH_LONG).show();
+				Log.e("Crashlytics Reporting","Error Reported");
+				Crashlytics.getInstance().core.logException(e);
+			}
+			@Override
+			public void restart(){
+				Intent i = getBaseContext().getPackageManager().getLaunchIntentForPackage(getBaseContext().getPackageName());
+				i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+				startActivity(i);
+				finish();
+			}
 
 		};
 		DynamoDB.database = new DynamoDB(){
@@ -156,16 +169,17 @@ public class AndroidLauncher extends AndroidApplication implements SurfaceHolder
 
 		//Initialize interstitial ads
 		MobileAds.initialize(this,
-				"");
+				getString(R.string.admob_id));
 		mInterstitialAd = new InterstitialAd(this);
-		mInterstitialAd.setAdUnitId("");
+		mInterstitialAd.setAdUnitId(getString(R.string.ad1_id));
 		//Send failure message if ad fails to load
 		mInterstitialAd.setAdListener(new AdListener(){
 			@Override
 			public void onAdFailedToLoad(int errorCode){
-				InterstitialAdLoader.ad.sendNotification("Connection Failed");
+//				InterstitialAdLoader.ad.sendNotification("Connection Failed");
 			}
 		});
+
 		InterstitialAdLoader.ad = new InterstitialAdLoader(){
 			//Load ad
 			@Override
@@ -416,5 +430,19 @@ public class AndroidLauncher extends AndroidApplication implements SurfaceHolder
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
 //		Toast.makeText(getApplicationContext(),"Destroyed Surface",Toast.LENGTH_LONG).show();
+	}
+
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			getWindow().getDecorView().setSystemUiVisibility(
+					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+							| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+							| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_FULLSCREEN
+							| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+		}
 	}
 }

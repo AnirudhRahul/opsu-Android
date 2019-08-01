@@ -60,7 +60,9 @@ import itdelatrisu.opsu.downloads.DownloadList;
 import itdelatrisu.opsu.downloads.DownloadNode;
 import itdelatrisu.opsu.downloads.servers.BloodcatServer;
 import itdelatrisu.opsu.downloads.servers.DownloadServer;
-import itdelatrisu.opsu.downloads.servers.HexideServer;
+import itdelatrisu.opsu.downloads.servers.MengSkyServer;
+import itdelatrisu.opsu.downloads.servers.OsuMirrorServer;
+import itdelatrisu.opsu.downloads.servers.RippleServer;
 import itdelatrisu.opsu.downloads.servers.YaSOnlineServer;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.ui.Colors;
@@ -111,9 +113,14 @@ public class DownloadsMenu extends BasicGameState {
 
 	/** Available beatmap download servers. */
 	private static final DownloadServer[] SERVERS = {
-		new HexideServer(),
+//		new MnetworkServer(),
+		new RippleServer(),
+//		new HexideServer(),
 		new BloodcatServer(),
-		new YaSOnlineServer()
+		new YaSOnlineServer(),
+		new MengSkyServer(),
+		new OsuMirrorServer()
+
 	};
 
 	/** The current list of search results. */
@@ -194,6 +201,9 @@ public class DownloadsMenu extends BasicGameState {
 	/** The bar notification to send upon entering the state. */
 	private String barNotificationOnLoad;
 
+	/** Icon in the top left to balance out the ui. */
+	private Image icon;
+
 	/** Search query, executed in {@code queryThread}. */
 	private SearchQuery searchQuery;
 
@@ -217,7 +227,10 @@ public class DownloadsMenu extends BasicGameState {
 		 * @param server the download server
 		 */
 		public SearchQuery(String query, DownloadServer server) {
-			this.query = query;
+			if(server.getName().equals("Ripple"))
+				this.query = query.isEmpty() ? "my hero":query;
+			else
+				this.query=query;
 			this.server = server;
 		}
 
@@ -242,6 +255,7 @@ public class DownloadsMenu extends BasicGameState {
 			else if (lastPageDir == Page.PREVIOUS)
 				newPage--;
 			try {
+//				UI.getNotificationManager().sendNotification(query);
 				DownloadNode[] nodes = server.resultList(query, newPage, rankedOnly);
 				if (!interrupted) {
 					// update page total
@@ -275,6 +289,7 @@ public class DownloadsMenu extends BasicGameState {
 			} catch (IOException e) {
 				if (!interrupted)
 					searchResultString = "Could not establish connection to server.\n Use another mirror server, or download beatmaps from the official osu website";
+				UI.getNotificationManager().sendNotification(e.getMessage()+"\nError Here");
 			} finally {
 				complete = true;
 			}
@@ -358,7 +373,7 @@ public class DownloadsMenu extends BasicGameState {
 		
 		titleY = height * 0.03f;//Utils.FONT_LARGE.getLineHeight();
 		
-		float baseX = width * 0.024f;
+		float baseX = width * 0.06f;
 		/*
 		float searchY = (height * 0.04f) + Fonts.LARGE.getLineHeight();
 		*/
@@ -416,6 +431,10 @@ public class DownloadsMenu extends BasicGameState {
 		float lowerButtonWidth = lowerButtonImage.getWidth() + lrButtonWidth;
 		clearButton = new MenuButton(lowerButtonImage, buttonL, buttonR,
 				width * 0.75f + buttonMarginX + lowerButtonWidth / 2f, lowerButtonY);
+
+		Image iconImage = GameImage.ICONSTAR.getImage();
+		icon = iconImage.getScaledCopy(1.5f*buttonHeight/iconImage.getHeight());
+
 
 		importButton = new MenuButton(lowerButtonImage, buttonL, buttonR,
 				width - buttonMarginX - lowerButtonWidth / 2f, lowerButtonY);
@@ -510,7 +529,7 @@ public class DownloadsMenu extends BasicGameState {
 			bg.drawCentered(width / 2, height / 2);
 
 		// title
-		Fonts.LARGE.drawString(width * 0.024f, titleY, "Download Beatmaps!", Color.white);
+		Fonts.LARGE.drawString(width * 0.06f, titleY, "Download Beatmaps!", Color.white);
 		
 		// search
 		g.setColor(Color.white);
@@ -591,6 +610,8 @@ public class DownloadsMenu extends BasicGameState {
 			if (downloadsSize > maxDownloadsShown)
 				DownloadNode.drawDownloadScrollbar(g, startDownloadIndexPos.getPosition(), downloadsSize * DownloadNode.getInfoHeight());
 		}
+		//top left icon
+		icon.draw(width*0.011f,height*0.05f);
 
 		// buttons
 		clearButton.draw(Color.gray);
@@ -1025,6 +1046,7 @@ public class DownloadsMenu extends BasicGameState {
 	public void enter(GameContainer container, StateBasedGame game)
 			throws SlickException {
 		bgIndex=(int)(Math.random()*3);
+
 		UI.enter();
 		prevPage.resetHover();
 		nextPage.resetHover();

@@ -17,6 +17,7 @@
  */
 
 package itdelatrisu.opsu.user;
+
 import com.badlogic.gdx.utils.async.AsyncExecutor;
 import com.badlogic.gdx.utils.async.AsyncTask;
 
@@ -29,6 +30,7 @@ import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.GameContainer;
 import fluddokt.opsu.fake.Graphics;
 import fluddokt.opsu.fake.Input;
+import fluddokt.opsu.fake.Log;
 import fluddokt.opsu.fake.SlickException;
 import fluddokt.opsu.fake.TextField;
 import fluddokt.opsu.fake.gui.AbstractComponent;
@@ -42,7 +44,6 @@ import itdelatrisu.opsu.ui.Fonts;
 import itdelatrisu.opsu.ui.KineticScrolling;
 import itdelatrisu.opsu.ui.MenuButton;
 import itdelatrisu.opsu.ui.UI;
-import itdelatrisu.opsu.ui.animations.AnimatedValue;
 import itdelatrisu.opsu.ui.animations.AnimationEquation;
 
 /*
@@ -124,17 +125,17 @@ public class UserSelectOverlay extends AbstractComponent {
 	/** New user button. */
 	private UserButton newUserButton;
 
+	private FunctionButton login, signUp;
+
 	/** New user icons. */
 	private MenuButton[] newUserIcons;
 
 	/** States. */
-	private enum State { USER_SELECT, CREATE_USER }
+	private enum State { USER_SELECT, USER_SIGNUP, USER_LOGIN}
 
 	/** Current state. */
 	private State state = State.USER_SELECT;
 
-	/** State change progress. */
-	private AnimatedValue stateChangeProgress = new AnimatedValue(500, 0f, 1f, AnimationEquation.LINEAR);
 
 	/** Colors. */
 	private static final Color
@@ -173,15 +174,23 @@ public class UserSelectOverlay extends AbstractComponent {
 		this.usersPaddingY = UserButton.getHeight() / 10;
 
 		// new user
-		this.newUser = new User("", UserList.DEFAULT_ICON);
-		this.newUserButton = new UserButton(
-			(int) (this.x + usersStartX),
-			(int) (this.y + usersStartY + Fonts.MEDIUMBOLD.getLineHeight()),
-			Color.white
-		);
-		newUserButton.setUser(newUser);
-		newUserButton.setHoverAnimationDuration(400);
-		newUserButton.setHoverAnimationEquation(AnimationEquation.LINEAR);
+//		this.newUser = new User("", UserList.DEFAULT_ICON);
+//		this.newUserButton = new UserButton(
+//			(int) (this.x + usersStartX),
+//			(int) (this.y + usersStartY + Fonts.MEDIUMBOLD.getLineHeight()),
+//			Color.white
+//		);
+//		newUserButton.setUser(newUser);
+//		newUserButton.setHoverAnimationDuration(400);
+//		newUserButton.setHoverAnimationEquation(AnimationEquation.LINEAR);
+
+		login = new FunctionButton(0, 0, Color.white, "Login");
+		login.setHoverAnimationDuration(400);
+		login.setHoverAnimationEquation(AnimationEquation.LINEAR);
+
+		signUp = new FunctionButton(0, 0, Color.white, "Sign Up");
+		signUp.setHoverAnimationDuration(400);
+		signUp.setHoverAnimationEquation(AnimationEquation.LINEAR);
 
 		// new user text field
 		this.textField = new TextField(container, Fonts.LARGE, 0, 0, 0, 0);
@@ -243,7 +252,7 @@ public class UserSelectOverlay extends AbstractComponent {
 
 		// set initial state
 		state = State.USER_SELECT;
-		stateChangeProgress.setTime(stateChangeProgress.getDuration());
+//		stateChangeProgress.setTime(stateChangeProgress.getDuration());
 		prepareUserSelect();
 	}
 
@@ -265,17 +274,22 @@ public class UserSelectOverlay extends AbstractComponent {
 		g.fillRect(x, y, width, height);
 		//textField.render(container, g);
 		// render states
-		if (!stateChangeProgress.isFinished()) {
+
+//		if (!stateChangeProgress.isFinished()) {
 			// blend states
-			float t = stateChangeProgress.getValue();
-			if (state == State.CREATE_USER)
-				t = 1f - t;
-			renderUserSelect(g, t);
-			renderUserCreate(g, 1f - t);
-		} else if (state == State.USER_SELECT)
+//			float t = stateChangeProgress.getValue();
+//			if (state == State.CREATE_USER)
+//				t = 1f - t;
+//			renderUserSelect(g, t);
+//			renderUserCreate(g, 1f - t);
+//		} else
+		if (state == State.USER_SELECT)
 			renderUserSelect(g, globalAlpha);
-		else if (state == State.CREATE_USER)
-			renderUserCreate(g, globalAlpha);
+		else if (state == State.USER_SIGNUP)
+			renderUserSignUp(g, globalAlpha);
+		else if (state == State.USER_LOGIN)
+			renderUserLogin(g, globalAlpha);
+
 
 		g.clearClip();
 	}
@@ -310,6 +324,143 @@ public class UserSelectOverlay extends AbstractComponent {
 		g.fillRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight);
 	}
 
+	private void renderUserSignUp(Graphics g, float alpha) {
+		COLOR_WHITE.a = alpha;
+		// title
+		String title = "Sign Up";
+		Fonts.XLARGE.drawString(
+				x + (width - Fonts.XLARGE.getWidth(title)) / 2,
+				(int) (y + titleY - scrolling.getPosition()),
+				title, COLOR_WHITE
+		);
+
+
+		int cy = (int) (y + usersStartY);
+
+		// Set up fields for username and password
+		String nameHeader = "Username";
+		String passwordHeader = "Password";
+		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(nameHeader)) / 2, cy, nameHeader, COLOR_WHITE);
+		cy += Fonts.MEDIUMBOLD.getLineHeight();
+		Color textColorUsername = COLOR_WHITE;
+		Color textColorPassword = COLOR_WHITE;
+		String username=textField.getText();
+		String password=textFieldPassword.getText();
+
+
+		if (!UserList.get().isValidUserName(username))
+			textColorUsername = COLOR_RED;
+		if (!UserList.get().isValidUserName(password))
+			textColorPassword = COLOR_RED;
+
+		if (username.isEmpty()) {
+			username = "Type a name...";
+			textColorUsername = COLOR_GRAY;
+		}
+
+		if (password.isEmpty()) {
+			password = "Type a password...";
+			textColorPassword = COLOR_GRAY;
+		}
+
+
+
+		int textWidth = Fonts.LARGE.getWidth(username);
+		int textWidthPassword = Fonts.LARGE.getWidth(password);
+		int searchTextX = (int) (x + (width - textWidth) / 2);
+		textField.setBound((int) (x + (width / 5)), cy, 3 * width / 5, Fonts.LARGE.getLineHeight());
+		Fonts.LARGE.drawString(searchTextX, cy, username, textColorUsername);
+		g.setColor(textColorUsername);
+		g.setLineWidth(2f);
+		cy+=Fonts.LARGE.getLineHeight();
+		g.drawLine(searchTextX, cy, searchTextX + textWidth, cy);
+		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(passwordHeader)) / 2, cy, passwordHeader, COLOR_WHITE);
+		cy += Fonts.MEDIUMBOLD.getLineHeight();
+//		textColor=COLOR_WHITE;
+		searchTextX = (int) (x + (width - textWidthPassword) / 2);
+		textFieldPassword.setBound((int) (x + (width / 5)), cy, 3 * width / 5, Fonts.LARGE.getLineHeight());
+		Fonts.LARGE.drawString(searchTextX, cy, password, textColorPassword);
+		cy += Fonts.LARGE.getLineHeight();
+		g.setColor(textColorPassword);
+		g.setLineWidth(2f);
+		g.drawLine(searchTextX, cy, searchTextX + textWidthPassword, cy);
+		cy += Fonts.MEDIUMBOLD.getLineHeight();
+
+		int cx = (int) (x + usersStartX);
+		signUp.setPosition(cx, cy);
+		signUp.draw(g, alpha);
+		cy += UserButton.getHeight() + Fonts.MEDIUMBOLD.getLineHeight();
+
+	}
+
+	private void renderUserLogin(Graphics g, float alpha) {
+		COLOR_WHITE.a = COLOR_RED.a = alpha;
+		COLOR_GRAY.a = alpha * 0.8f;
+
+		// title
+		String title = "Login";
+		Fonts.XLARGE.drawString(
+				x + (width - Fonts.XLARGE.getWidth(title)) / 2,
+				(int) (y + titleY - scrolling.getPosition()),
+				title, COLOR_WHITE
+		);
+
+		int cy = (int) (y + usersStartY);
+
+		// Set up fields for username and password
+		String nameHeader = "Username";
+		String passwordHeader = "Password";
+		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(nameHeader)) / 2, cy, nameHeader, COLOR_WHITE);
+		cy += Fonts.MEDIUMBOLD.getLineHeight();
+		Color textColorUsername = COLOR_WHITE;
+		Color textColorPassword = COLOR_WHITE;
+		String username=textField.getText();
+		String password=textFieldPassword.getText();
+
+
+		if (!UserList.get().isValidUserName(username))
+			textColorUsername = COLOR_RED;
+		if (!UserList.get().isValidUserName(password))
+			textColorPassword = COLOR_RED;
+
+		if (username.isEmpty()) {
+			username = "Type a name...";
+			textColorUsername = COLOR_GRAY;
+		}
+		if (password.isEmpty()) {
+			password = "Type a password...";
+			textColorPassword = COLOR_GRAY;
+		}
+
+
+		int textWidth = Fonts.LARGE.getWidth(username);
+		int textWidthPassword = Fonts.LARGE.getWidth(password);
+		int searchTextX = (int) (x + (width - textWidth) / 2);
+		textField.setBound((int) (x + (width / 5)), cy, 3 * width / 5, Fonts.LARGE.getLineHeight());
+		Fonts.LARGE.drawString(searchTextX, cy, username, textColorUsername);
+		g.setColor(textColorUsername);
+		g.setLineWidth(2f);
+		cy+=Fonts.LARGE.getLineHeight();
+		g.drawLine(searchTextX, cy, searchTextX + textWidth, cy);
+		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(passwordHeader)) / 2, cy, passwordHeader, COLOR_WHITE);
+		cy += Fonts.MEDIUMBOLD.getLineHeight();
+//		textColor=COLOR_WHITE;
+		searchTextX = (int) (x + (width - textWidthPassword) / 2);
+		textFieldPassword.setBound((int) (x + (width / 5)), cy, 3 * width / 5, Fonts.LARGE.getLineHeight());
+		Fonts.LARGE.drawString(searchTextX, cy, password, textColorPassword);
+		cy += Fonts.LARGE.getLineHeight();
+		g.setColor(textColorPassword);
+		g.setLineWidth(2f);
+		g.drawLine(searchTextX, cy, searchTextX + textWidthPassword, cy);
+		cy += Fonts.MEDIUMBOLD.getLineHeight();
+
+		int cx = (int) (x + usersStartX);
+		login.setPosition(cx, cy);
+		login.draw(g, alpha);
+		cy += UserButton.getHeight() + Fonts.MEDIUMBOLD.getLineHeight();
+
+	}
+
 	/** Renders the user creation menu. */
 	private void renderUserCreate(Graphics g, float alpha) {
 		COLOR_WHITE.a = COLOR_RED.a = alpha;
@@ -331,7 +482,7 @@ public class UserSelectOverlay extends AbstractComponent {
 		newUserButton.draw(g, alpha);
 		cy += UserButton.getHeight() + Fonts.MEDIUMBOLD.getLineHeight();
 
-		// user name
+		// Set up fields for username and password
 		String nameHeader = "Name";
 		String passwordHeader = "Password";
 		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(nameHeader)) / 2, cy, nameHeader, COLOR_WHITE);
@@ -361,7 +512,6 @@ public class UserSelectOverlay extends AbstractComponent {
 		Fonts.MEDIUMBOLD.drawString(x + (width - Fonts.MEDIUMBOLD.getWidth(passwordHeader)) / 2, cy, passwordHeader, COLOR_WHITE);
 		cy += Fonts.MEDIUMBOLD.getLineHeight();
 		textColor=COLOR_WHITE;
-
 		searchTextX = (int) (x + (width - textWidthPassword) / 2);
         textFieldPassword.setBound((int) x, cy, width, Fonts.LARGE.getLineHeight());
         Fonts.LARGE.drawString(searchTextX, cy, password, textColor);
@@ -369,10 +519,6 @@ public class UserSelectOverlay extends AbstractComponent {
         g.setColor(textColor);
         g.setLineWidth(2f);
 		g.drawLine(searchTextX, cy, searchTextX + textWidthPassword, cy);
-
-
-
-
 		cy += Fonts.MEDIUMBOLD.getLineHeight();
 
 //		// user icons
@@ -418,20 +564,19 @@ public class UserSelectOverlay extends AbstractComponent {
 			return;
 
 		scrolling.update(delta);
-		stateChangeProgress.update(delta);
+//		stateChangeProgress.update(delta);
 		int mouseX = input.getMouseX(), mouseY = input.getMouseY();
 
 		// user button hover updates
-		if (state == State.USER_SELECT || !stateChangeProgress.isFinished()) {
+		if (state == State.USER_SELECT) {
 			UserButton hover = getButtonAtPosition(mouseX, mouseY);
 			for (UserButton button : userButtons)
 				button.hoverUpdate(delta, button == hover);
 		}
-		if (state == State.CREATE_USER || !stateChangeProgress.isFinished()) {
-			newUserButton.hoverUpdate(delta, UserList.get().isValidUserName(newUser.getName()));
-			for (int i = 0; i < newUserIcons.length; i++)
-				newUserIcons[i].hoverUpdate(delta, mouseX, mouseY);
-		}
+		else if(state == State.USER_LOGIN)
+			login.hoverUpdate(delta, login.contains(mouseX, mouseY));
+		else if(state == State.USER_SIGNUP)
+			signUp.hoverUpdate(delta, signUp.contains(mouseX, mouseY));
 	}
 
 	@Override
@@ -447,7 +592,7 @@ public class UserSelectOverlay extends AbstractComponent {
 			return;
 		}
 
-		if (state == State.CREATE_USER) {
+		if (state == State.USER_SIGNUP || state == State.USER_LOGIN) {
 			textField.setFocus(true);
 			textField.resetConsume();
 			textField.mousePressed(button, x, y);
@@ -499,36 +644,49 @@ public class UserSelectOverlay extends AbstractComponent {
 		if (state == State.USER_SELECT) {
 			if (selectedButton != null) {
 				SoundController.playSound(SoundEffect.MENUCLICK);
-				if (selectedButton.getUser() == null) {
-					// new user
-					state = State.CREATE_USER;
-					stateChangeProgress.setTime(0);
-					prepareUserCreate();
-				} else {
+				if (selectedButton.function==null){
 					// select user
 					String name = selectedButton.getUser().getName();
 					if (!name.equals(UserList.get().getCurrentUser().getName())) {
 						UserList.get().changeUser(name);
-						listener.close(true);
+						AsyncExecutor executor=new AsyncExecutor(1);
+						AsyncTask t=new updateTask();
+						executor.submit(t);
 					} else
 						listener.close(false);
+				} else if(selectedButton.function.equals("Sign Up")){
+					state = State.USER_SIGNUP;
+					prepareUserSignUp();
+				} else if(selectedButton.function.equals("Login")){
+					state = State.USER_LOGIN;
+					prepareUserLogin();
 				}
+
 			}
-		} else if (state == State.CREATE_USER) {
-			// add new user
-			if (newUserButton.contains(x, y))
-				createNewUser();
-			else {
-				// change user icons
-				for (int i = 0; i < newUserIcons.length; i++) {
-					if (newUserIcons[i].contains(x, y)) {
-						SoundController.playSound(SoundEffect.MENUCLICK);
-						newUser.setIconId(i);
-						break;
-					}
-				}
-			}
+		} else if(state == State.USER_LOGIN) {
+			if(login.contains(x, y))
+				loginUser(textField.getText(), textFieldPassword.getText());
+
+		} else if(state == State.USER_SIGNUP){
+			if(signUp.contains(x, y))
+				signUpUser(textField.getText(), textFieldPassword.getText());
+
 		}
+//		else if (state == State.CREATE_USER) {
+//			// add new user
+//			if (newUserButton.contains(x, y))
+//				createNewUser();
+//			else {
+//				// change user icons
+//				for (int i = 0; i < newUserIcons.length; i++) {
+//					if (newUserIcons[i].contains(x, y)) {
+//						SoundController.playSound(SoundEffect.MENUCLICK);
+//						newUser.setIconId(i);
+//						break;
+//					}
+//				}
+//			}
+//		}
 
 		selectedButton = null;
 	}
@@ -596,14 +754,14 @@ public class UserSelectOverlay extends AbstractComponent {
 
 		consumeEvent();
 
-		// key entry
-		if (state == State.CREATE_USER) {
-			// enter: create user
-			if (key == Input.KEY_ENTER) {
-				createNewUser();
-				return;
-			}
-		}
+//		// key entry
+//		if (state == State.CREATE_USER) {
+//			// enter: create user
+//			if (key == Input.KEY_ENTER) {
+//				createNewUser();
+//				return;
+//			}
+//		}
 	}
 	@Override
 	public void keyType(char c) {
@@ -613,17 +771,17 @@ public class UserSelectOverlay extends AbstractComponent {
 		consumeEvent();
 
 		// key entry
-		if (state == State.CREATE_USER) {
+		if (state == State.USER_SIGNUP || state == State.USER_LOGIN) {
             if(textField.isConsumed()){
-			textField.setFocus(true);
-			textField.keyType(c);
-			textField.setFocus(false);
-			newUser.setName(textField.getText());}
-            else{
+				textField.setFocus(true);
+				textField.keyType(c);
+				textField.setFocus(false);
+//				newUser.setName(textField.getText());
+            } else{
                 textFieldPassword.setFocus(true);
                 textFieldPassword.keyType(c);
                 textFieldPassword.setFocus(false);
-				newUser.setPassword(textFieldPassword.getText());
+//				newUser.setPassword(textFieldPassword.getText());
             }
 			/*
 			if (c > 255 && Character.isLetterOrDigit(c)) {
@@ -648,79 +806,147 @@ public class UserSelectOverlay extends AbstractComponent {
 			if (button.contains(cx, cy))
 				return button;
 		}
+
 		return null;
 	}
 
-	/** Creates a new user and switches to it. */
-	private void createNewUser() {
+	private void flash(){
+		if(state == State.USER_LOGIN)
+			login.flash();
+		else if(state == State.USER_SIGNUP)
+			signUp.flash();
+
+	}
+	String usernameToCheck,passwordToCheck;
+	/** Logs in a new user and switches to it. */
+	private void loginUser(String username, String password) {
 		SoundController.playSound(SoundEffect.MENUCLICK);
-		String name = newUser.getName();
-		String password=newUser.getPassword();
-		if (!UserList.get().isValidUserName(name)) {
-			String error = name.isEmpty() ? "Enter a name for the user." : "You can't use that name.";
+		if (!UserList.get().isValidUserName(username)) {
+			String error = username.isEmpty() ? "Enter a name for the user." : "Invalid username.";
 			UI.getNotificationManager().sendBarNotification(error);
-			newUserButton.flash();
+			flash();
 		}else if(!UserList.get().isValidPassword(password)){
-			String error = password.isEmpty() ? "Enter a password for the user." : "You can't use that password.";
+			String error = password.isEmpty() ? "Enter a password for the user." : "Invalid password.";
 			UI.getNotificationManager().sendBarNotification(error);
-			newUserButton.flash();
-		}
-		else {
+			flash();
+		} else {
+			usernameToCheck=username;
+			passwordToCheck=password;
 			AsyncExecutor executor=new AsyncExecutor(1);
 			AsyncTask t=new loginTask();
 			executor.submit(t);
+
 		}
 	}
+
+	/** Signs up a new user and switches to it. */
+	private void signUpUser(String username, String password) {
+		SoundController.playSound(SoundEffect.MENUCLICK);
+		if (!UserList.get().isValidUserName(username)) {
+			String error = username.isEmpty() ? "Enter a name for the user." : "Invalid username.";
+			UI.getNotificationManager().sendBarNotification(error);
+			flash();
+		}else if(!UserList.get().isValidPassword(password)){
+			String error = password.isEmpty() ? "Enter a password for the user." : "Invalid password.";
+			UI.getNotificationManager().sendBarNotification(error);
+			flash();
+		} else {
+			usernameToCheck=username;
+			passwordToCheck=password;
+			AsyncExecutor executor=new AsyncExecutor(1);
+			AsyncTask t=new signUpTask();
+			executor.submit(t);
+
+		}
+	}
+
+
+
+	private class updateTask implements AsyncTask<Integer> {
+		@Override
+		public Integer call() {
+			try {
+				DynamoDB.database.updateUser(UserList.get().getCurrentUser());
+				listener.close(true);
+			}catch (Exception e){
+				ErrorHandler.error("Error update",e.getCause(),false);
+				Log.error(e);
+			}
+			return 0;
+		}
+
+	}
+
 private class loginTask implements AsyncTask<Integer> {
 	@Override
 	public Integer call() {
 		try {
-			UserList.get().getUsers().clear();
-			String username = newUser.getName();
-			String password = newUser.getPassword();
-			boolean[] out = new boolean[2];
-			out[0] = DynamoDB.database.dataBaseContainsUsername(username);
-			out[1] = DynamoDB.database.dataBaseContainsUsernameAndPassword(username, password);
+			String username = usernameToCheck;
+			String password = passwordToCheck;
+			User userFromDB = DynamoDB.database.dataBaseContainsUsernameAndPassword(username, password);
+			Options.GameOption.USE_WIFI.setValue(true);
+//			UI.getNotificationManager().sendNotification("Contains username and password " + (userFromDB!=null));
+			if(userFromDB!=null){
 
-			if (out[1]) {
-				UI.getNotificationManager().sendNotification("Logged in", Colors.GREEN);
-				User userFromDB = DynamoDB.database.getUserFromDB(username);
-//			UI.getNotificationManager().sendNotification(UserList.get().getUsers().toString());
 				userFromDB.setPassword(password);
 				UserList.get().addUser(userFromDB);
-
-				//debug
-//				UI.getNotificationManager().sendNotification("UserInfo: " + userFromDB.getName());
-
 				UserList.get().changeUser(username);
 
 				if (!DeviceInfo.info.isSynced())
 					DeviceInfo.info.setSynced(true);
 
+				UI.getNotificationManager().sendNotification("Logged in", Colors.GREEN);
+				listener.close(true);
 			}
-			//Username exists but the password provided is incorrect
-			if (out[0] == true && out[1] == false) {
-				UI.getNotificationManager().sendNotification("Wrong Password(Username " + username + " already in use)", Colors.GREEN);
-				newUser.setName("");
-				newUser.setPassword("");
-			}
-			//Username does not exist, so new user is created
-			if (out[0] == false) {
-				User curUser = UserList.get().createNewUser(username, password);
-				DynamoDB.database.addUserToDataBase(curUser);
-				UserList.get().changeUser(username);
-				UI.getNotificationManager().sendNotification("Account Created", Colors.GREEN);
-				if (!DeviceInfo.info.isSynced())
-					DeviceInfo.info.setSynced(true);
-			}
-			listener.close(true);
-			return 0;
+			else
+				UI.getNotificationManager().sendNotification("Failed to Log in", Colors.RED);
+			Log.debug("Finished loginTask");
+
 		}catch (Exception e){
-			ErrorHandler.error("Error",e.getCause(),false);
+			ErrorHandler.error("Error login",e.getCause(),true);
+			Log.error(e);
 		}
 		return 0;
 	}
+
 }
+
+	private class signUpTask implements AsyncTask<Integer> {
+		@Override
+		public Integer call() {
+			try {
+				UserList.get().getUsers().clear();
+				String username = usernameToCheck;
+				String password = passwordToCheck;
+				boolean worked = !DynamoDB.database.dataBaseContainsUsername(username);
+				Options.GameOption.USE_WIFI.setValue(true);
+
+				//Username does not exist, so new user is created
+				if (worked) {
+					User curUser = UserList.get().createNewUser(username, password);
+					DynamoDB.database.addUserToDataBase(curUser);
+					UserList.get().changeUser(username);
+					UI.getNotificationManager().sendNotification("Account Created", Colors.GREEN);
+					if (!DeviceInfo.info.isSynced())
+						DeviceInfo.info.setSynced(true);
+					listener.close(true);
+				}
+				else{
+					UI.getNotificationManager().sendNotification("Username Taken", Colors.RED);
+
+				}
+
+			}catch (Exception e){
+				ErrorHandler.error("Error signup",e.getCause(),true);
+				Log.error(e);
+			}
+			return 0;
+
+		}
+	}
+
+
+
 	/** Prepares the user selection state. */
 	private void prepareUserSelect() {
 		selectedButton = null;
@@ -738,7 +964,10 @@ private class loginTask implements AsyncTask<Integer> {
 		}
 		if (defaultUser != null)
 			userButtons.add(defaultUser);  // add default user at the end
-		userButtons.add(new UserButton(0, 0, Color.white));  // create new user
+
+		//Add function buttons
+		userButtons.add(new FunctionButton(0, 0, Color.white, "Login"));  // login
+		userButtons.add(new FunctionButton(0, 0, Color.white, "Sign Up"));  // sign up
 		maxScrollOffset = Math.max(0,
 			(UserButton.getHeight() + usersPaddingY) * userButtons.size() -
 			(int) ((height - usersStartY) * 0.9f));
@@ -746,6 +975,25 @@ private class loginTask implements AsyncTask<Integer> {
 		scrolling.setPosition(0f);
 		scrolling.setAllowOverScroll(true);
 		scrolling.setMinMax(0, maxScrollOffset);
+	}
+
+	private void prepareUserSignUp() {
+		UI.getNotificationManager().sendNotification("Preparing sign up");
+		textField.setText("");
+		textFieldPassword.setText("");
+		signUp.resetHover();
+		scrolling.setPosition(0f);
+		scrolling.setAllowOverScroll(false);
+		scrolling.setMinMax(0, 0);
+	}
+
+	private void prepareUserLogin() {
+		textField.setText("");
+		textFieldPassword.setText("");
+		login.resetHover();
+		scrolling.setPosition(0f);
+		scrolling.setAllowOverScroll(false);
+		scrolling.setMinMax(0, 0);
 	}
 
 	/** Prepares the user creation state. */

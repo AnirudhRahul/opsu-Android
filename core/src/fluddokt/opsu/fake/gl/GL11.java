@@ -1,8 +1,9 @@
 package fluddokt.opsu.fake.gl;
 
+import com.badlogic.gdx.Gdx;
+
 import java.nio.ByteBuffer;
 
-import com.badlogic.gdx.Gdx;
 import fluddokt.opsu.fake.Log;
 
 public class GL11 {
@@ -90,8 +91,9 @@ public class GL11 {
 	}
 
 	public static boolean glGetBoolean(int pname) {
-		Gdx.gl20.glGetBooleanv(pname, UtilBuff.prepareByte());
-		return UtilBuff.getByte() != 0;
+		Gdx.gl20.glGetBooleanv(pname, UtilBuff.prepare());
+
+		return UtilBuff.get() != 0;
 	}
 
 	public static void glDepthMask(boolean flag) {
@@ -161,6 +163,7 @@ public class GL11 {
 	
 	private static RenderState getRenderState() {
 		RenderState state = new RenderState();
+//		Gdx.gl.glGetBooleanv(Gdx.gl.GL_POLYGON_OFFSET_FACTOR,);
 		state.smoothedPoly = GL11.glGetBoolean(GL11.GL_POLYGON_SMOOTH);
 		state.blendEnabled = GL11.glGetBoolean(GL11.GL_BLEND);
 		state.depthEnabled = GL11.glGetBoolean(GL11.GL_DEPTH_TEST);

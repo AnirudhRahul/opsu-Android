@@ -18,12 +18,14 @@
 
 package itdelatrisu.opsu;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLEncoder;
+
 import fluddokt.ex.DeviceInfo;
 import fluddokt.opsu.fake.GameOpsu;
 import fluddokt.opsu.fake.Log;
 import fluddokt.opsu.fake.gl.GL11;
-
-
 
 /*
 import itdelatrisu.opsu.options.Options;
@@ -34,9 +36,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 */
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URLEncoder;
 //import java.util.Properties;
 
 /*
@@ -130,6 +129,7 @@ public class ErrorHandler {
 		else
 			Log.error(error, e);
 
+		DeviceInfo.info.reportError(e);
 		GameOpsu.error(error, e);
 		/*
 		// set the textArea to the error message

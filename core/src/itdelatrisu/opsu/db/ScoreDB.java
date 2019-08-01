@@ -24,7 +24,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -38,6 +37,7 @@ import itdelatrisu.opsu.ScoreData;
 import itdelatrisu.opsu.Utils;
 import itdelatrisu.opsu.beatmap.Beatmap;
 import itdelatrisu.opsu.options.Options;
+import itdelatrisu.opsu.ui.UI;
 import itdelatrisu.opsu.user.User;
 import itdelatrisu.opsu.user.UserList;
 
@@ -50,7 +50,7 @@ public class ScoreDB {
 	 * This value should be changed whenever the database format changes.
 	 * Add any update queries to the {@link #getUpdateQueries(int)} method.
 	 */
-	private static final int DATABASE_VERSION = 20170201;
+	private static final int DATABASE_VERSION = 20170202;
 
 	/**
 	 * Returns a list of SQL queries to apply, in order, to update from
@@ -252,6 +252,7 @@ public class ScoreDB {
 			insertStmt.setString(19, data.playerName);
 			insertStmt.executeUpdate();
 		} catch (SQLException e) {
+			UI.getNotificationManager().sendNotification("Error Thrown");
 			ErrorHandler.error("Failed to save score to database.", e, true);
 		}
 	}
@@ -321,6 +322,7 @@ public class ScoreDB {
 		stmt.setInt(15, data.combo);
 		stmt.setBoolean(16, data.perfect);
 		stmt.setInt(17, data.mods);
+
 	}
 
 	/**
@@ -328,7 +330,7 @@ public class ScoreDB {
 	 * @param beatmap the beatmap
 	 * @return all scores for the beatmap, or null if any error occurred
 	 */
-	public static ScoreData[] getMapScores(Beatmap beatmap) {
+	public static ArrayList<ScoreData> getMapScores(Beatmap beatmap) {
 		return getMapScoresExcluding(beatmap, null);
 	}
 
@@ -338,7 +340,7 @@ public class ScoreDB {
 	 * @param exclude the filename (replay string) of the score to exclude
 	 * @return all scores for the beatmap except for exclude, or null if any error occurred
 	 */
-	public static ScoreData[] getMapScoresExcluding(Beatmap beatmap, String exclude) {
+	public static ArrayList<ScoreData> getMapScoresExcluding(Beatmap beatmap, String exclude) {
 		if (connection == null)
 			return null;
 
@@ -363,7 +365,7 @@ public class ScoreDB {
 			ErrorHandler.error("Failed to read scores from database.", e, true);
 			return null;
 		}
-		return getSortedArray(list);
+		return getSorted(list);
 	}
 
 	/**
@@ -372,11 +374,12 @@ public class ScoreDB {
 	 * @return all scores for the beatmap set (Version, ScoreData[]),
 	 *         or null if any error occurred
 	 */
-	public static Map<String, ScoreData[]> getMapSetScores(Beatmap beatmap) {
+	public static Map<Integer, ArrayList<ScoreData>> getMapSetScores(Beatmap beatmap) {
 		if (connection == null)
 			return null;
 
-		Map<String, ScoreData[]> map = new HashMap<String, ScoreData[]>();
+//		UI.getNotificationManager().sendNotification("Connection not null");
+		Map<Integer, ArrayList<ScoreData>> map = new HashMap<>();
 		try {
 			selectMapSetStmt.setInt(1, beatmap.beatmapSetID);
 			selectMapSetStmt.setString(2, beatmap.title);
@@ -390,14 +393,14 @@ public class ScoreDB {
 				ScoreData s = new ScoreData(rs);
 				if (!s.version.equals(version)) {
 					if (list != null)
-						map.put(version, getSortedArray(list));
+						map.put(beatmap.beatmapID, getSorted(list));
 					version = s.version;
 					list = new ArrayList<ScoreData>();
 				}
 				list.add(s);
 			}
 			if (list != null)
-				map.put(version, getSortedArray(list));
+				map.put(beatmap.beatmapID, getSorted(list));
 			rs.close();
 		} catch (SQLException e) {
 			ErrorHandler.error("Failed to read scores from database.", e, true);
@@ -409,10 +412,19 @@ public class ScoreDB {
 	/**
 	 * Returns a sorted ScoreData array (in reverse order) from a List.
 	 */
-	private static ScoreData[] getSortedArray(List<ScoreData> list) {
-		ScoreData[] scores = list.toArray(new ScoreData[list.size()]);
-		Arrays.sort(scores, Collections.reverseOrder());
-		return scores;
+	private static ArrayList<ScoreData> getSorted(List<ScoreData> in) {
+		ArrayList<ScoreData> list = new ArrayList<>(in);
+		Collections.sort(list, Collections.reverseOrder());
+		return list;
+	}
+
+	private static int[] fromString(String string) {
+		String[] strings = string.replace("[", "").replace("]", "").split(", ");
+		int result[] = new int[strings.length];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = Integer.parseInt(strings[i]);
+		}
+		return result;
 	}
 
 	/**
@@ -428,11 +440,16 @@ public class ScoreDB {
 		try (Statement stmt = connection.createStatement()) {
 			String sql = "SELECT * FROM users";
 			ResultSet rs = stmt.executeQuery(sql);
-			while (rs.next())
-				users.add(new User(
-					rs.getString(1), rs.getLong(2), rs.getDouble(3),
-					rs.getInt(4), rs.getInt(5), rs.getInt(6)
-				));
+			while (rs.next()) {
+				User userToAdd=new User(
+						rs.getString(1), rs.getLong(2), rs.getDouble(3),
+						rs.getInt(4), rs.getInt(5), rs.getInt(6)
+				);
+
+				users.add(userToAdd);
+			}
+
+
 			rs.close();
 		} catch (SQLException e) {
 			ErrorHandler.error("Failed to read users from database.", e, true);

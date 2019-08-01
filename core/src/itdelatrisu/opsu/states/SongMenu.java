@@ -18,20 +18,15 @@
 
 package itdelatrisu.opsu.states;
 
-import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import fluddokt.ex.DeviceInfo;
-import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.ex.VideoLoader;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.FadeInTransition;
@@ -73,6 +68,9 @@ import itdelatrisu.opsu.beatmap.LRUCache;
 import itdelatrisu.opsu.beatmap.OszUnpacker;
 import itdelatrisu.opsu.db.BeatmapDB;
 import itdelatrisu.opsu.db.ScoreDB;
+import itdelatrisu.opsu.leaderboard.LeaderboardMode;
+import itdelatrisu.opsu.leaderboard.MyGlobal;
+import itdelatrisu.opsu.leaderboard.TopGlobal;
 import itdelatrisu.opsu.options.OptionGroup;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.options.OptionsOverlay;
@@ -89,6 +87,7 @@ import itdelatrisu.opsu.ui.animations.AnimationEquation;
 import itdelatrisu.opsu.user.UserButton;
 import itdelatrisu.opsu.user.UserList;
 import itdelatrisu.opsu.user.UserSelectOverlay;
+
 //import itdelatrisu.opsu.audio.MultiClip;
 /*
 import java.io.File;
@@ -146,8 +145,8 @@ public class SongMenu extends BasicGameState {
 	/** Fast scrolling speed multiplier. */
 	private static final float FAST_SCROLL_SPEED = 2f;
 
-	//Create new asyncExecutor with 10 thread cap
-	private ExecutorService asyncExecutor= Executors.newFixedThreadPool(10);
+	//Create new asyncExecutor with 5 thread cap
+	private ExecutorService asyncExecutor= Executors.newFixedThreadPool(5);
 
 	/** Song node class representing an BeatmapSetNode and file index. */
 	private static class SongNode {
@@ -295,11 +294,11 @@ public class SongMenu extends BasicGameState {
 		}
 	}
 
-	/** Current map of scores (Version, ScoreData[]). */
-	private Map<String, ScoreData[]> scoreMap;
+	/** Current map of scores (beatmapID, ScoreData[]). */
+	private Map<Integer, ArrayList<ScoreData>> scoreMap;
 
 	/** Scores for the current focus node. */
-	private ScoreData[] focusScores;
+	private ArrayList<ScoreData> focusScores;
 
 	/** Current start score (topmost score entry). */
 	private KineticScrolling startScorePos = new KineticScrolling();
@@ -379,6 +378,15 @@ public class SongMenu extends BasicGameState {
 
 	//Different Leaderboard modes
 	private DropdownMenu<String> leaderboardMenu;
+
+	private LeaderboardMode[] leaderboardModes;
+
+	private LeaderboardMode currentMode=null;
+
+	/** Reload Scores button. */
+//	private MenuButton reloadButton;
+
+//	private Image reloadImage;
 
 	/** Options overlay. */
 	private OptionsOverlay optionsOverlay;
@@ -467,17 +475,37 @@ public class SongMenu extends BasicGameState {
 		sortMenu.setBorderColor(Colors.BLUE_DIVIDER);
 		sortMenu.setChevronRightColor(Color.white);
 
+		//null represents local
+		leaderboardModes = new LeaderboardMode[]{null, TopGlobal.mode, MyGlobal.mode};
+		String[] modeNames=new String[leaderboardModes.length];
+		for(int i=0;i<leaderboardModes.length;i++){
+			if(leaderboardModes[i]==null) {
+				modeNames[i] = "Local";
+			}
+			else {
+				modeNames[i] = leaderboardModes[i].toString();
+//				leaderboardModes[i].setUser(UserList.get().getCurrentUser());
+			}
+		}
+		leaderboardMenu = new DropdownMenu<String>(container, modeNames, 0, 0, (int) (width * 0.12f)) {
 
-		String[] leaderboardModes={"Local","Top Global","My Global"};
-		leaderboardMenu = new DropdownMenu<String>(container, leaderboardModes, 0, 0, (int) (width * 0.12f)) {
 			@Override
 			public void itemSelected(int index, String item) {
 				//makes sure it resets properly
-				updateScoreMap();
-				focusScores = getScoreDataForNode(focusNode, true);
-				startScorePos.setPosition(0);
-				return;
+
+				currentMode=leaderboardModes[index];
+				if(!Options.GameOption.USE_WIFI.getBooleanValue()&&currentMode!=null){
+					UI.getNotificationManager().sendNotification("Please restart with an internet connection to use online features");
+					leaderboardMenu.setSelectedIndex(0);
+					return;
+				}
+
+				SongMenu.this.setFocus(focusNode, 0, false, true);
+
+//				focusScores = getScoreDataForNode(focusNode, true);
+//				startScorePos.setPosition(0);
 			}
+
 
 			@Override
 			public boolean menuClicked(int index) {
@@ -529,13 +557,15 @@ public class SongMenu extends BasicGameState {
 		searchFont = Fonts.BOLD;
 		search = new TextField(
 				container, searchFont, textFieldX, textFieldY,
-				(int) (width * 0.99f) - textFieldX, Fonts.BOLD.getLineHeight()
+				Math.round(1.01f*Fonts.LARGE.getWidth("Click to search!")), Fonts.BOLD.getLineHeight()
 		);
-		search.setBackgroundColor(Color.transparent);
+		search.setBackgroundColor(Color.gray);
 		search.setBorderColor(Color.transparent);
 		search.setTextColor(Color.white);
 		search.setConsumeEvents(false);
 		search.setMaxLength(60);
+
+//		reloadImage = GameImage.UPDATE.getImage().getScaledCopy(0.7f);
 
 		// selection buttons
 		Image selectionMods = GameImage.SELECTION_MODS.getImage();
@@ -550,10 +580,13 @@ public class SongMenu extends BasicGameState {
 				selectX + selectOffset * 2f, selectY);
 		selectOptionsButton = new MenuButton(GameImage.SELECTION_OTHER_OPTIONS_OVERLAY.getImage(),
 				selectX + selectOffset * 3f, selectY);
+//		reloadButton = new MenuButton(reloadImage,
+//				width * 0.405f - reloadImage.getWidth() / 2f, headerY - reloadImage.getHeight() / 2f);
 		selectModsButton.setHoverFade(0f);
 		selectRandomButton.setHoverFade(0f);
 		selectMapOptionsButton.setHoverFade(0f);
 		selectOptionsButton.setHoverFade(0f);
+//		reloadButton.setHoverFade(0f);
 
 		// loader
 		int loaderDim = GameImage.MENU_MUSICNOTE.getImage().getWidth();
@@ -664,9 +697,9 @@ public class SongMenu extends BasicGameState {
 			//finds points along a very large circle  (x^2 = h^2 - y^2)
 			float t = circleRadi * circleRadi - (mid * mid);
 			float xpos = (float) ((t > 0) ? Math.sqrt(t) : 0) - circleRadi + 50 * GameImage.getUIscale();
-			ScoreData[] scores = getScoreDataForNode(node, false);
+			ArrayList<ScoreData> scores = getScoreDataForNode(node, false);
 			node.draw(buttonX - offset - xpos, ypos,
-					(scores == null) ? Grade.NULL : scores[0].getGrade(), (node == focusNode));
+					(scores == null) ? Grade.NULL : scores.get(0).getGrade(), (node == focusNode));
 		}
 
 		// scroll bar
@@ -684,14 +717,15 @@ public class SongMenu extends BasicGameState {
 			}
 		}
 		g.clearClip();
-
+		checkFutures();
+		focusScores = getScoreDataForNode(focusNode, false);
 		// score buttons
 		if (focusScores != null) {
 			ScoreData.clipToArea(g);
 			int startScore = (int) (startScorePos.getPosition() / ScoreData.getButtonOffset());
 			int offset = (int) (-startScorePos.getPosition() + startScore * ScoreData.getButtonOffset());
 
-			int scoreButtons = Math.min(focusScores.length - startScore, MAX_SCORE_BUTTONS + 1);
+			int scoreButtons = Math.min(focusScores.size() - startScore, MAX_SCORE_BUTTONS + 1);
 			float timerScale = 1f - (1 / 3f) * ((MAX_SCORE_BUTTONS - scoreButtons) / (float) (MAX_SCORE_BUTTONS));
 			int duration = (int) (songChangeTimer.getDuration() * timerScale);
 			int segmentDuration = (int) ((2 / 3f) * songChangeTimer.getDuration());
@@ -699,19 +733,19 @@ public class SongMenu extends BasicGameState {
 			for (int i = 0, rank = startScore; i < scoreButtons; i++, rank++) {
 				if (rank < 0)
 					continue;
-				long prevScore = (rank + 1 < focusScores.length) ? focusScores[rank + 1].score : -1;
+				long prevScore = (rank + 1 < focusScores.size()) ? focusScores.get(rank + 1).score : -1;
 				boolean focus = ScoreData.buttonContains(mouseX, mouseY - offset, i) && !showOptionsOverlay && !showUserOverlay;
 				float alpha = 0.9f;
-				if(leaderboardMenu.getSelectedItem().equals("My Global")&&focusScores[rank].rank!=-1)
-					focusScores[rank].draw(g, offset + i * ScoreData.getButtonOffset(), focusScores[rank].rank, prevScore, focus, alpha);
+				if(leaderboardMenu.getSelectedItem().equals("My Global") && focusScores.get(rank).rank!=-1)
+					focusScores.get(rank).draw(g, offset + i * ScoreData.getButtonOffset(), focusScores.get(rank).rank, prevScore, focus, alpha);
 				else
-					focusScores[rank].draw(g, offset + i * ScoreData.getButtonOffset(), rank, prevScore, focus, alpha);
+					focusScores.get(rank).draw(g, offset + i * ScoreData.getButtonOffset(), rank, prevScore, focus, alpha);
 
 			}
 			g.clearClip();
 			// scroll bar
-			if (focusScores.length > MAX_SCORE_BUTTONS && ScoreData.areaContains(mouseX, mouseY) && !inDropdownMenu)
-				ScoreData.drawScrollbar(g, startScorePos.getPosition(), focusScores.length * ScoreData.getButtonOffset());
+			if (focusScores.size() > MAX_SCORE_BUTTONS && ScoreData.areaContains(mouseX, mouseY) && !inDropdownMenu)
+				ScoreData.drawScrollbar(g, startScorePos.getPosition(), focusScores.size() * ScoreData.getButtonOffset());
 		}
 
 		// top/bottom bars
@@ -817,6 +851,10 @@ public class SongMenu extends BasicGameState {
 		selectMapOptionsButton.draw();
 		GameImage.SELECTION_OTHER_OPTIONS.getImage().drawCentered(selectOptionsButton.getX(), selectOptionsButton.getY());
 		selectOptionsButton.draw();
+//		if(currentMode!=null) {
+//			reloadImage.drawCentered(reloadButton.getX(), reloadButton.getY());
+//			reloadButton.draw();
+//		}
 
 		// user button
 		userButton.setUser(UserList.get().getCurrentUser());
@@ -825,17 +863,17 @@ public class SongMenu extends BasicGameState {
 		// group tabs
 		BeatmapGroup currentGroup = BeatmapGroup.current();
 		BeatmapGroup hoverGroup = null;
-		if (!inDropdownMenu) {
-			for (BeatmapGroup group : BeatmapGroup.values()) {
-				if (group.contains(mouseX, mouseY)) {
-					hoverGroup = group;
+		//Dont use for each in render loop its slow
+		if (!inDropdownMenu)
+			for( int i=0; i<BeatmapGroup.values().length; i++)
+				if(BeatmapGroup.values()[i].contains(mouseX,mouseY)) {
+					hoverGroup = BeatmapGroup.values()[i];
 					break;
 				}
-			}
-		}
-		for (BeatmapGroup group : BeatmapGroup.VALUES_REVERSED) {
-			if (group != currentGroup)
-				group.draw(false, group == hoverGroup);
+
+		for( int i=0; i<BeatmapGroup.values().length; i++){
+			if (BeatmapGroup.values()[i] != currentGroup)
+				BeatmapGroup.values()[i].draw(false, BeatmapGroup.values()[i] == hoverGroup);
 		}
 		currentGroup.draw(true, false);
 
@@ -924,6 +962,7 @@ public class SongMenu extends BasicGameState {
 		selectRandomButton.hoverUpdate(delta, mouseX, mouseY);
 		selectMapOptionsButton.hoverUpdate(delta, mouseX, mouseY);
 		selectOptionsButton.hoverUpdate(delta, mouseX, mouseY);
+//		reloadButton.hoverUpdate(delta, mouseX, mouseY);
 		userButton.hoverUpdate(delta, userButton.contains(mouseX, mouseY));
 		footerLogoButton.hoverUpdate(delta, mouseX, mouseY, 0.25f);
 
@@ -998,7 +1037,7 @@ public class SongMenu extends BasicGameState {
 
 		// scores
 		if (focusScores != null) {
-			startScorePos.setMinMax(0, (focusScores.length - MAX_SCORE_BUTTONS) * ScoreData.getButtonOffset());
+			startScorePos.setMinMax(0, (focusScores.size() - MAX_SCORE_BUTTONS) * ScoreData.getButtonOffset());
 			startScorePos.update(delta);
 		}
 
@@ -1028,24 +1067,50 @@ public class SongMenu extends BasicGameState {
 			hoverOffset.setTime(0);
 			hoverIndex = null;
 		}
+//		Beatmap current=focusNode.getSelectedBeatmap();
+//		//Future
+//		if(futureScoresMyGlobal.containsKey(current.beatmapID)){
+//			if(futureScoresMyGlobal.get(current.beatmapID).isCancelled())
+//				futureScoresMyGlobal.remove(current.beatmapID);
+//			if(futureScoresMyGlobal.get(current.beatmapID).isDone()){
+//				UI.getNotificationManager().sendNotification("Future(My) completed for:"+current.getTitle());
+//				try {
+//					myGlobalCache.put(current.beatmapID,futureScoresMyGlobal.get(current.beatmapID).get());
+//					if(leaderboardMenu.getMode()==LeaderboardMode.MY){
+//						scoreMap.put(current.beatmapID,futureScoresMyGlobal.get(current.beatmapID).get());
+//					}
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//					UI.getNotificationManager().sendNotification(e.toString());
+//				}
+//				futureScoresMyGlobal.remove(current.beatmapID);
+//			}
+//
+//		}
 
+
+
+//		if(!futureScoresTopGlobal.isEmpty())
+//			UI.getNotificationManager().sendNotification(futureScoresTopGlobal.toString());
+//		UI.getNotificationManager().sendNotification("Updating");
 		// tooltips
 		if (sortMenu.baseContains(mouseX, mouseY))
 			UI.updateTooltip(delta, "Sort by...", false);
 		else if (focusScores != null && ScoreData.areaContains(mouseX, mouseY) && !showOptionsOverlay && !showUserOverlay) {
 			int startScore = (int) (startScorePos.getPosition() / ScoreData.getButtonOffset());
 			int offset = (int) (-startScorePos.getPosition() + startScore * ScoreData.getButtonOffset());
-			int scoreButtons = Math.min(focusScores.length - startScore, MAX_SCORE_BUTTONS + 1);
+			int scoreButtons = Math.min(focusScores.size() - startScore, MAX_SCORE_BUTTONS + 1);
 			for (int i = 0, rank = startScore; i < scoreButtons; i++, rank++) {
 				if (rank < 0)
 					continue;
 				if (ScoreData.buttonContains(mouseX, mouseY - offset, i)) {
-					UI.updateTooltip(delta, focusScores[rank].getTooltipString(), true);
+					UI.updateTooltip(delta, focusScores.get(rank).getTooltipString(), true);
 					break;
 				}
 			}
 		}
 	}
+
 
 	@Override
 	public int getID() { return state; }
@@ -1146,10 +1211,7 @@ public class SongMenu extends BasicGameState {
 			optionsOverlayProgress.setTime(0);
 			optionsOverlay.activate();
 			return;
-		}
-
-		// user button
-		if (userButton.contains(x, y)) {
+		} else if (userButton.contains(x, y)) {
 			SoundController.playSound(SoundEffect.MENUCLICK);
 			showUserOverlay = true;
 			userOverlayProgress.setTime(0);
@@ -1237,30 +1299,24 @@ public class SongMenu extends BasicGameState {
 		if (focusScores != null && ScoreData.areaContains(x, y)) {
 			int startScore = (int) (startScorePos.getPosition() / ScoreData.getButtonOffset());
 			int offset = (int) (-startScorePos.getPosition() + startScore * ScoreData.getButtonOffset());
-			int scoreButtons = Math.min(focusScores.length - startScore, MAX_SCORE_BUTTONS + 1);
+			int scoreButtons = Math.min(focusScores.size() - startScore, MAX_SCORE_BUTTONS + 1);
 			for (int i = 0, rank = startScore; i < scoreButtons; i++, rank++) {
 				if (ScoreData.buttonContains(x, y - offset, i)) {
 					SoundController.playSound(SoundEffect.MENUHIT);
 					if (button != Input.MOUSE_RIGHT_BUTTON) {
 						// view score
-						GameData data = new GameData(focusScores[rank], container.getWidth(), container.getHeight());
+						GameData data = new GameData(focusScores.get(rank), container.getWidth(), container.getHeight());
 						((GameRanking) game.getState(Opsu.STATE_GAMERANKING)).setGameData(data);
 						game.enterState(Opsu.STATE_GAMERANKING, new EasedFadeOutTransition(), new FadeInTransition());
 					} else {
 						// score management
-						((ButtonMenu) game.getState(Opsu.STATE_BUTTONMENU)).setMenuState(MenuState.SCORE, focusScores[rank]);
+						((ButtonMenu) game.getState(Opsu.STATE_BUTTONMENU)).setMenuState(MenuState.SCORE, focusScores.get(rank));
 						game.enterState(Opsu.STATE_BUTTONMENU);
 					}
 					return;
 				}
 			}
 		}
-	}
-	public String getPreparedVideo(){
-		if(VideoLoader.loader.getState().equals("INITIALIZED"))
-			return VideoLoader.loader.getPreparedFile();
-		else
-			return "";
 	}
 
 	@Override
@@ -1437,7 +1493,7 @@ public class SongMenu extends BasicGameState {
 			return;
 
 		// score buttons
-		if (focusScores != null && focusScores.length >= MAX_SCORE_BUTTONS && ScoreData.areaContains(oldx, oldy))
+		if (focusScores != null && focusScores.size() >= MAX_SCORE_BUTTONS && ScoreData.areaContains(oldx, oldy))
 			startScorePos.dragged(-diff);
 
 			// song buttons
@@ -1463,7 +1519,7 @@ public class SongMenu extends BasicGameState {
 		int mouseX = input.getMouseX(), mouseY = input.getMouseY();
 
 		// score buttons
-		if (focusScores != null && focusScores.length >= MAX_SCORE_BUTTONS && ScoreData.areaContains(mouseX, mouseY))
+		if (focusScores != null && focusScores.size() >= MAX_SCORE_BUTTONS && ScoreData.areaContains(mouseX, mouseY))
 			startScorePos.scrollOffset(ScoreData.getButtonOffset() * shift);
 
 			// song buttons
@@ -1478,6 +1534,7 @@ public class SongMenu extends BasicGameState {
 
 		Display.setTitle(game.getTitle());
 		selectModsButton.resetHover();
+//		reloadButton.resetHover();
 		selectRandomButton.resetHover();
 		selectMapOptionsButton.resetHover();
 		selectOptionsButton.resetHover();
@@ -1555,7 +1612,7 @@ public class SongMenu extends BasicGameState {
 
 			// reload scores
 			if (focusNode != null) {
-				//If Top Global is selected retrieve the scores from DynamoDB
+				loadScores();
 				updateScoreMap();
 				focusScores = getScoreDataForNode(focusNode, true);
 			}
@@ -1586,7 +1643,7 @@ public class SongMenu extends BasicGameState {
 					ScoreDB.deleteScore(beatmap);
 					if (stateActionNode == focusNode) {
 						focusScores = null;
-						scoreMap.remove(beatmap.version);
+						scoreMap.remove(beatmap.beatmapID);
 					}
 					break;
 				case SCORE:  // clear single score
@@ -1824,31 +1881,101 @@ public class SongMenu extends BasicGameState {
 			startNode = BeatmapSetList.get().getBaseNode(startNodeIndex);
 	}
 
+//	public HashMap<Integer, ArrayList<ScoreData>> deepCopy(Map<Integer, ArrayList<ScoreData>> in){
+//		HashMap<Integer, ArrayList<ScoreData>> copy=new HashMap<>();
+//		for(int id:in.keySet())
+//			copy.put(id,new ArrayList<>(in.get(id)));
+//		return copy;
+//	}
 
+	public void loadScores(){
+		Beatmap current=focusNode.getSelectedBeatmap();
+		if(currentMode!=null) {
+//			currentMode.setUsername(UserList.get().getCurrentUser().getName());
+			currentMode.loadScores(current, execute(currentMode.getCallable(current)));
+		}
+//		if(leaderboardMenu.getMode()==LeaderboardMode.TOP) {
+//			try {
+//				//Fetch results if we dont already have them
+//				if(!(topGlobalCache.containsKey(current.beatmapID)||futureScoresTopGlobal.containsKey(current.beatmapID))) {
+//					futureScoresTopGlobal.put(current.beatmapID, execute(new retrieveDBtopGlobal(current)));
+//					UI.getNotificationManager().sendNotification("Added task to top global");
+//				}
+//
+//
+//
+//				UI.getNotificationManager().sendNotification(futureScoresTopGlobal.toString());
+//			} catch (Exception e) {
+//				UI.getNotificationManager().sendNotification("Failed DB retrieval");
+//				Log.error(e);
+//			}
+//		}
+//		else if(leaderboardMenu.getMode()==LeaderboardMode.MY) {
+//			try {
+//				if(!(myGlobalCache.containsKey(current.beatmapID)||futureScoresMyGlobal.containsKey(current.beatmapID)))
+//					futureScoresMyGlobal.put(current.beatmapID, execute(new retrieveDBmyGlobal(current)));
+//			} catch (Exception e) {
+//				UI.getNotificationManager().sendNotification("Failed DB retrieval");
+//				Log.error(e);
+//			}
+//		}
+	}
 	public void updateScoreMap(){
-		if(leaderboardMenu.getSelectedItem().equals("Top Global"))
-			try {
-				scoreMap=execute(new retrieveDBtopGlobal());
-			} catch (Exception e) {
-				UI.getNotificationManager().sendNotification("Failed DB retrieval");
-				e.printStackTrace();
-			}
-		else if(leaderboardMenu.getSelectedItem().equals("My Global"))
-			try {
-				scoreMap=execute(new retrieveDBmyGlobal());
-			} catch (Exception e) {
-				UI.getNotificationManager().sendNotification("Failed DB retrieval");
-				e.printStackTrace();
-			}
+		Beatmap current=focusNode.getSelectedBeatmap();
+//		if(leaderboardMenu.getMode()==LeaderboardMode.TOP) {
+//			scoreMap=deepCopy(topGlobalCache);
+//		}
+//		else if(leaderboardMenu.getMode()==LeaderboardMode.MY) {
+//			scoreMap=deepCopy(myGlobalCache);
+//		}
+//		else
+//			scoreMap = ScoreDB.getMapSetScores(current);
+
+		if(currentMode!=null)
+			scoreMap = currentMode.getCache();
 		else
-			scoreMap = ScoreDB.getMapSetScores(focusNode.getSelectedBeatmap());
+			scoreMap = ScoreDB.getMapSetScores(current);
+
 
 	}
+
+	public void checkFutures(){
+		if(focusNode==null)
+			return;
+		Beatmap current=focusNode.getSelectedBeatmap();
+		int id = current.beatmapID;
+		if(currentMode!=null && currentMode.isFutureDone(current))
+			scoreMap.put(id, currentMode.getFuture(current));
+
+//		if(futureScoresTopGlobal.containsKey(id)) {
+//			if (futureScoresTopGlobal.get(id).isDone()) {
+//				UI.getNotificationManager().sendNotification("Future(Top) completed for:" + current.getTitle() + "\nCancelled:" + futureScoresTopGlobal.get(id).isCancelled());
+//				try {
+//					topGlobalCache.put(id, futureScoresTopGlobal.get(id).get());
+//					if (leaderboardMenu.getMode() == LeaderboardMode.TOP) {
+//						scoreMap.put(id, futureScoresTopGlobal.get(id).get());
+//					}
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//					UI.getNotificationManager().sendNotification(e.toString());
+//				}
+//				Log.debug("b4 " + futureScoresTopGlobal);
+//				futureScoresTopGlobal.remove(id);
+//				Log.debug("aft " + futureScoresTopGlobal);
+//
+//			}
+//			else
+//				UI.getNotificationManager().sendNotification("Incomplete Future for"+id+"\nCancelled:"+futureScoresTopGlobal.get(current.beatmapID).isCancelled());
+
+
+	}
+
+
 	private boolean setupError=false;
 
 	/**
 	 * Sets a new focus node.
-	 * @param node the new node to focus
+	 * @p aram node the new node to focus
 	 * @param beatmapIndex the beatmap element to focus (if out of bounds, randomly chosen)
 	 * @param forceFastScroll if fast scroll should always be used to scroll to the new focus node
 	 * @param preview whether to start at the preview time (true) or beginning (false)
@@ -1902,12 +2029,13 @@ public class SongMenu extends BasicGameState {
 			VideoLoader.loader.adjustBrightness(Options.GameOption.VIDEO_BRIGHTNESS.getIntegerValue());
 			String output=VideoLoader.loader.setupVideo(beatmap.video.getAbsolutePath());
 			setupError=!(output.equals("True"));
-			if(setupError)
-				UI.getNotificationManager().sendNotification("Error Code:"+output);
+//			if(setupError)
+//				UI.getNotificationManager().sendNotification("Error Code:"+output);
 		}
 		MusicController.play(beatmap, false, preview);
 
 		// load scores
+		loadScores();
 		updateScoreMap();
 		focusScores = getScoreDataForNode(focusNode, true);
 		startScorePos.setPosition(0);
@@ -1944,64 +2072,57 @@ public class SongMenu extends BasicGameState {
 		return oldFocus;
 	}
 
-	private Map<String, ScoreData[]> execute(Callable<Map<String, ScoreData[]>> c){
-		Future<Map<String, ScoreData[]>> task = asyncExecutor.submit(c);
+	public void resetRanking(){
+		leaderboardMenu.setSelectedIndex(0);
+		updateScoreMap();
+		focusScores = getScoreDataForNode(focusNode, true);
+		startScorePos.setPosition(0);
+
+	}
+
+	private Future<ArrayList<ScoreData>> execute(Callable<ArrayList<ScoreData>> c){
+
 		if(focusNode.getSelectedBeatmap().beatmapID==0){
-			leaderboardMenu.setSelectedIndex(0);
-			updateScoreMap();
-			focusScores = getScoreDataForNode(focusNode, true);
-			startScorePos.setPosition(0);
+			resetRanking();
 			UI.getNotificationManager().sendNotification("Leaderboard not available for this map");
 			return null;
 		}
-		else
-		try {
 
-			return task.get(1500, TimeUnit.MILLISECONDS);
+		return asyncExecutor.submit(c);
 
-		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			//ErrorHandler.error("Connection error",e,true);
-			UI.getNotificationManager().sendNotification("beatmapMID:"+focusNode.getSelectedBeatmap().beatmapID);
-			UI.getNotificationManager().sendNotification(e.getLocalizedMessage());
-			UI.getNotificationManager().sendNotification("Connection failed:"+e.getMessage()+"");
-			task.cancel(true);
-			leaderboardMenu.setSelectedIndex(0);
-			updateScoreMap();
-			focusScores = getScoreDataForNode(focusNode, true);
-			startScorePos.setPosition(0);
-			return null;
-		}
+
+//		else
+//		try {
+//			return task.get(15000, TimeUnit.MILLISECONDS);
+//
+//		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+//			//ErrorHandler.error("Connection error",e,true);
+//			UI.getNotificationManager().sendNotification("beatmapMID:"+focusNode.getSelectedBeatmap().beatmapID);
+////			UI.getNotificationManager().sendNotification(e.getLocalizedMessage());
+////			UI.getNotificationManager().sendNotification("Connection failed:"+e.getMessage()+"");
+//			Log.error(e);
+//			task.cancel(true);
+//			leaderboardMenu.setSelectedIndex(0);
+//			updateScoreMap();
+//			focusScores = getScoreDataForNode(focusNode, true);
+//			startScorePos.setPosition(0);
+//
+//			return null;
+//
+//		}
 
 	}
 
-	private class retrieveDBtopGlobal implements Callable<Map<String, ScoreData[]>> {
 
-		@Override
-		public Map<String, ScoreData[]> call() throws SQLException {
-			return 	getScoreMapfromDB(focusNode.getSelectedBeatmap());
 
-		}
-	}
-
-	private class retrieveDBmyGlobal implements Callable<Map<String, ScoreData[]>> {
-
-		@Override
-		public Map<String, ScoreData[]> call() throws SQLException {
-			return getScoreMapfromDB(focusNode.getSelectedBeatmap(), UserList.get().getCurrentUser().getName());
-
-		}
-	}
-
-	public HashMap<String, ScoreData[]> getScoreMapfromDB(Beatmap set) throws SQLException {
-		HashMap<String, ScoreData[]> map=new HashMap<>();
-		map.put(set.version, DynamoDB.database.createScoreData(DynamoDB.database.getBeatmapScore(set.beatmapID)));
-		return map;
-	}
-	public HashMap<String, ScoreData[]> getScoreMapfromDB(Beatmap set, String username) throws SQLException {
-		HashMap<String, ScoreData[]> map=new HashMap<>();
-		map.put(set.version, DynamoDB.database.createScoreData(DynamoDB.database.getBeatmapScore(set.beatmapID),username));
-		return map;
-	}
+//	public ArrayList<ScoreData> getScoreMapfromDB(Beatmap set) throws SQLException {
+//
+//		return DynamoDB.database.createScoreData(DynamoDB.database.getBeatmapScore(set.beatmapID));
+//
+//	}
+//	public ArrayList<ScoreData> getScoreMapfromDB(Beatmap set, String username) throws SQLException {
+//		return DynamoDB.database.createScoreData(DynamoDB.database.getUserBeatmapScore(set.beatmapID,username));
+//	}
 
 	/**
 	 * Triggers a reset of game data upon entering this state.
@@ -2056,23 +2177,23 @@ public class SongMenu extends BasicGameState {
 	 * @param setTimeSince whether or not to set the "time since" field for the scores
 	 * @return the ScoreData array
 	 */
-	private ScoreData[] getScoreDataForNode(BeatmapSetNode node, boolean setTimeSince) {
+	private ArrayList<ScoreData> getScoreDataForNode(BeatmapSetNode node, boolean setTimeSince) {
 		if (scoreMap == null || scoreMap.isEmpty() || node.beatmapIndex == -1)  // node not expanded
 			return null;
 
 		Beatmap beatmap = node.getSelectedBeatmap();
-		ScoreData[] scores = scoreMap.get(beatmap.version);
-		if (scores == null || scores.length < 1)  // no scores
+		ArrayList<ScoreData> scores = scoreMap.get(beatmap.beatmapID);
+		if (scores == null || scores.size() < 1)  // no scores
 			return null;
 
-		ScoreData s = scores[0];
+		ScoreData s = scores.get(0);
 		if (beatmap.beatmapID == s.MID && beatmap.beatmapSetID == s.MSID &&
 				beatmap.title.equals(s.title) && beatmap.artist.equals(s.artist) &&
 				beatmap.creator.equals(s.creator)) {
-			for (int i = 0; i < scores.length; i++) {
+			for (int i = 0; i < scores.size(); i++) {
 				if (setTimeSince)
-					scores[i].getTimeSince();
-				scores[i].loadGlyphs();
+					scores.get(i).getTimeSince();
+				scores.get(i).loadGlyphs();
 			}
 			return scores;
 		} else
@@ -2085,7 +2206,7 @@ public class SongMenu extends BasicGameState {
 	 */
 	private void reloadBeatmaps(final boolean fullReload) {
 		songFolderChanged = false;
-
+		UI.getNotificationManager().sendNotification("Called Reload");
 		// reset state and node references
 		MusicController.reset();
 		startNode = focusNode = null;
@@ -2108,6 +2229,11 @@ public class SongMenu extends BasicGameState {
 		// reload songs in new thread
 		reloadThread = new BeatmapReloadThread(fullReload);
 		reloadThread.start();
+	}
+
+	public void resetScores(){
+		if(currentMode!=null)
+			currentMode.reset();
 	}
 
 	/**

@@ -87,9 +87,9 @@ public class GameContainer extends GUIContext{
 		return Graphics.getGraphics();
 	}
 
-	public int getScreenWidth() {return Gdx.graphics.getDesktopDisplayMode().width;}
+	public int getScreenWidth() {return Gdx.graphics.getWidth();}
 
-	public int getScreenHeight() {return Gdx.graphics.getDesktopDisplayMode().height;}
+	public int getScreenHeight() {return Gdx.graphics.getHeight();}
 
 	public void setVSync(boolean b) {
 		Gdx.graphics.setVSync(b);
@@ -150,11 +150,10 @@ public class GameContainer extends GUIContext{
 		
 	}
 	public void setDefaultMouseCursor() {
-		Gdx.input.setCursorImage(null, 0, 0);
-		
+		Gdx.graphics.setCursor(null);
 	}
 	public void setMouseCursor(Cursor cursor, int x, int y) throws SlickException {
-		Gdx.input.setCursorImage(cursor.getPixmap(), x, y);
+		Gdx.graphics.setCursor(Gdx.graphics.newCursor(cursor.getPixmap(), x, y));
 		
 	}
 	public double getAspectRatio() {

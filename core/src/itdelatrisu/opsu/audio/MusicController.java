@@ -151,6 +151,10 @@ public class MusicController {
 			// create the music player
 			// NOTE: most errors from this call are suppressed, so check
 			//       for SoundStore errors manually afterwards
+			if(file.getPath()==null) {
+				UI.getNotificationManager().sendNotification("Track not found");
+				return;
+			}
 			player = new Music(file.getPath(), true);
 			if (!SoundStore.get().soundWorks()) {
 				player = null;

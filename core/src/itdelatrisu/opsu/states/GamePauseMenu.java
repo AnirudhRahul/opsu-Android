@@ -73,9 +73,8 @@ public class GamePauseMenu extends BasicGameState {
 	private static final Color
 			MUSICBAR_NORMAL = new Color(12, 9, 10, 0.25f),
 			MUSICBAR_HOVER  = new Color(12, 9, 10, 0.35f),
-			MUSICBAR_FILL   = new Color(255, 177, 122, 0.75f);
+			MUSICBAR_FILL   = new Color(255, 177, 122, 0.9f);
 	private boolean adjusting=false;
-	private boolean turnedOffNotif=false;
 	public GamePauseMenu(int state) {
 		this.state = state;
 	}
@@ -91,7 +90,7 @@ public class GamePauseMenu extends BasicGameState {
 		int height = container.getHeight();
 		musicBarX = width * 0.01f;
 		musicBarY = height * 0.05f;
-		musicBarWidth = Math.max(width * 0.005f, 7);
+		musicBarWidth = Math.max(width * 0.007f, 10);
 		musicBarHeight = height * 0.9f;
 	}
 
@@ -201,6 +200,7 @@ public class GamePauseMenu extends BasicGameState {
 		if (button == Input.MOUSE_MIDDLE_BUTTON)
 			return;
 		boolean loseState = (gameState.getPlayState() == Game.PlayState.LOSE);
+		UI.getNotificationManager().reset();
 		adjusting=false;
 		if (continueButton.contains(x, y) && !loseState) {
 			SoundController.playSound(SoundEffect.MENUBACK);
@@ -232,10 +232,7 @@ public class GamePauseMenu extends BasicGameState {
 			float pos = (musicBarHeight - y + musicBarY) / musicBarHeight * 255f;
 			Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(pos));
 			adjusting=true;
-			if(!turnedOffNotif){
-				DeviceInfo.info.setShownNotification("brightSlider",true);
-				turnedOffNotif=true;
-			}
+
 		}
 	}
 	@Override
@@ -243,9 +240,11 @@ public class GamePauseMenu extends BasicGameState {
 		if(useVideo&&(musicPositionBarContains(oldx,oldy)||adjusting)){
 			float pos = (musicBarHeight - newy + musicBarY) / musicBarHeight * 255f;
 			Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(pos));
+			UI.getNotificationManager().sendBarNotification("Adjusting Brightness");
 		}
-		else
-			adjusting=false;
+		else {
+			adjusting = false;
+		}
 	}
 	@Override
 	public void mouseWheelMoved(int newValue) {
@@ -253,6 +252,11 @@ public class GamePauseMenu extends BasicGameState {
 			return;
 
 		UI.globalMouseWheelMoved(newValue, false);
+	}
+
+	@Override
+	public void mouseReleased(int button, int x, int y) {
+		UI.getNotificationManager().reset();
 	}
 
 	@Override
@@ -265,7 +269,9 @@ public class GamePauseMenu extends BasicGameState {
 		backButton.resetHover();
 		if(!DeviceInfo.info.shownNotification("brightSlider")&&useVideo){
 			UI.getNotificationManager().sendNotification("Hey did you know you can change the background video brightness with the slider on the left?");
+			DeviceInfo.info.setShownNotification("brightSlider",true);
 		}
+
 	}
 
 

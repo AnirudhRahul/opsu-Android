@@ -14,5 +14,7 @@ public class DeviceInfo {
 	public boolean isMusicPlaying(){return false;}
 	public boolean isSynced(){return false;}
 	public void setSynced(boolean in){}
+	public void reportError(Throwable e){}
 	public boolean hasPhysicalButtons(){return false;}
+	public void restart(){}
 }

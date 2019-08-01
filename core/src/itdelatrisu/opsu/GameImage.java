@@ -317,6 +317,13 @@ public enum GameImage {
 			return img.getScaledCopy(r, r);
 		}
 	},
+	MENU_RELOAD ("reload", "png", false, false) {
+		@Override
+		protected Image process_sub(Image img, int w, int h) {
+			int r = (int) ((Fonts.LARGE.getLineHeight() + Fonts.DEFAULT.getLineHeight() - 8) / getUIscale());
+			return img.getScaledCopy(r / 48f);
+		}
+	},
 	MENU_LOADER ("loader", "png", false, false) {
 		@Override
 		protected Image process_sub(Image img, int w, int h) {
@@ -364,7 +371,12 @@ public enum GameImage {
 			return img.getScaledCopy((MENU_BUTTON_BG.getImage().getHeight() * 0.33f) / img.getHeight());
 		}
 	},
-
+	ICONSTAR ("whiteIcon", "png", false, false) {
+		@Override
+		protected Image process_sub(Image img, int w, int h) {
+			return img.getScaledCopy(Options.getMobileUIScale(0.5f));
+		}
+	},
 	// Music Player Buttons
 	MUSIC_PLAY ("music-play", "png", false, false){
 		@Override
@@ -391,20 +403,41 @@ public enum GameImage {
 		}
 	},
 	MUSIC_NOW_PLAYING ("music-now-playing", "png", false, false),
+	STAR_BADGE ("badge_star", "png", false, false),
+	BB_CALENDAR_BADGE ("badge_calendar_bronzeBronze", "png", false, false),
+	BS_CALENDAR_BADGE ("badge_calendar_bronzeSilver", "png", false, false),
+	BG_CALENDAR_BADGE ("badge_calendar_bronzeGold", "png", false, false),
+	SB_CALENDAR_BADGE ("badge_calendar_silverBronze", "png", false, false),
+	SS_CALENDAR_BADGE ("badge_calendar_silverSilver", "png", false, false),
+	SG_CALENDAR_BADGE ("badge_calendar_silverGold", "png", false, false),
+	GB_CALENDAR_BADGE ("badge_calendar_goldBronze", "png", false, false),
+	GS_CALENDAR_BADGE ("badge_calendar_goldSilver", "png", false, false),
+	GG_CALENDAR_BADGE ("badge_calendar_goldGold", "png", false, false),
 
+	ULTRASTAR_BADGE ("badge_ultraStar", "png", false, false),
 	DOWNLOADS ("downloads", "png", false, false) {
 		@Override
 		protected Image process_sub(Image img, int w, int h) {
 			return img.getScaledCopy((h * 0.45f) / img.getHeight() * Options.getMobileUIScale(0.5f));
+
 		}
 	},
-	SEARCH_BG ("search-background", "png|jpg", false, true) {
+
+	PROFILE ("profileButton", "png", false, false) {
 		@Override
 		protected Image process_sub(Image img, int w, int h) {
-			img.setAlpha(0.8f);
-			return img.getScaledCopy(w, h);
+			return img.getScaledCopy((h * 0.45f) / img.getHeight() * Options.getMobileUIScale(0.5f));
+
 		}
 	},
+
+//	SEARCH_BG ("search-background", "png|jpg", false, true) {
+//		@Override
+//		protected Image process_sub(Image img, int w, int h) {
+//			img.setAlpha(0.8f);
+//			return img.getScaledCopy(w, h);
+//		}
+//	},
 	SEARCH_BG1 ("appBG1", "png|jpg", false, true) {
 		@Override
 		protected Image process_sub(Image img, int w, int h) {

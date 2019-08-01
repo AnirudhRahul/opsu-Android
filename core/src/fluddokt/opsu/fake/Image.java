@@ -233,7 +233,7 @@ public class Image {
 		}
 
 		public void addImage(ImageRefInfo info, Pixmap p2) {
-			Pixmap.setBlending(Pixmap.Blending.None);
+			p.setBlending(Pixmap.Blending.None);
 			p.drawPixmap(p2, info.ax, info.ay);
 			imgs.add(info);
 		}
@@ -245,7 +245,7 @@ public class Image {
 
 		private void loadPixmap() {
 			p = new Pixmap(pw, ph, Format.RGBA8888);
-			Pixmap.setBlending(Pixmap.Blending.None);
+			p.setBlending(Pixmap.Blending.None);
 			for (ImageRefInfo info : imgs) {
 				Pixmap p2 = new Pixmap(info.fh);
 				p.drawPixmap(p2, info.ax, info.ay);

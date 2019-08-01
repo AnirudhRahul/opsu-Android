@@ -143,7 +143,7 @@ public class Game extends BasicGameState {
 	private static final float SCOREBOARD_FADE_IN_TIME = 300f;
 
 	/** Minimum time before start of song, in milliseconds, to process skip-related actions. */
-	private static int SKIP_OFFSET = 2000;
+	private static final int SKIP_OFFSET = 2000;
 
 	/** Tolerance in case if hit object is not snapped to the grid. */
 	private static final float STACK_LENIENCE = 3f;
@@ -307,7 +307,7 @@ public class Game extends BasicGameState {
 	private float musicBarX, musicBarY, musicBarWidth, musicBarHeight;
 
 	/** The previous scores. */
-	private ScoreData[] previousScores;
+	private ArrayList<ScoreData> previousScores;
 
 	/** The current rank in the scores. */
 	private int currentRank;
@@ -744,7 +744,7 @@ public class Game extends BasicGameState {
 		if (Options.GameOption.SCOREBOARD.getBooleanValue() && previousScores != null && trackPosition >= firstObjectTime && !GameMod.RELAX.isActive() && !GameMod.AUTOPILOT.isActive()) {
 			// NOTE: osu! uses the actual score, but we use sliding score instead
 			ScoreData currentScore = data.getCurrentScoreData(beatmap, true);
-			while (currentRank > 0 && previousScores[currentRank - 1].score < currentScore.score) {
+			while (currentRank > 0 && previousScores.get(currentRank - 1).score < currentScore.score) {
 				currentRank--;
 				scoreboardStarStream.burst(20);
 				lastRankUpdateTime = trackPosition;
@@ -762,23 +762,23 @@ public class Game extends BasicGameState {
 				// draw the (new) top 5 ranks
 				for (int i = 0; i < 4; i++) {
 					int index = i + (i >= currentRank ? 1 : 0);
-					if (i < previousScores.length) {
+					if (i < previousScores.size()) {
 						float position = index + (i == currentRank ? animation - 3f : -2f);
-						previousScores[i].drawSmall(g, scoreboardPosition, index + 1, position, data, currentScoreboardAlpha, false);
+						previousScores.get(i).drawSmall(g, scoreboardPosition, index + 1, position, data, currentScoreboardAlpha, false);
 					}
 				}
 				currentScore.drawSmall(g, scoreboardPosition, currentRank + 1, currentRank - 1f - animation, data, currentScoreboardAlpha, true);
 			} else {
 				// draw the top 2 and next 2 ranks
-				previousScores[0].drawSmall(g, scoreboardPosition, 1, -2f, data, currentScoreboardAlpha, false);
-				previousScores[1].drawSmall(g, scoreboardPosition, 2, -1f, data, currentScoreboardAlpha, false);
-				previousScores[currentRank - 2].drawSmall(
+				previousScores.get(0).drawSmall(g, scoreboardPosition, 1, -2f, data, currentScoreboardAlpha, false);
+				previousScores.get(1).drawSmall(g, scoreboardPosition, 2, -1f, data, currentScoreboardAlpha, false);
+				previousScores.get(currentRank - 2).drawSmall(
 					g, scoreboardPosition, currentRank - 1, animation - 1f, data, currentScoreboardAlpha * animation, false
 				);
-				previousScores[currentRank - 1].drawSmall(g, scoreboardPosition, currentRank, animation, data, currentScoreboardAlpha, false);
+				previousScores.get(currentRank - 1).drawSmall(g, scoreboardPosition, currentRank, animation, data, currentScoreboardAlpha, false);
 				currentScore.drawSmall(g, scoreboardPosition, currentRank + 1, 2f, data, currentScoreboardAlpha, true);
-				if (animation < 1.0f && currentRank < previousScores.length) {
-					previousScores[currentRank].drawSmall(
+				if (animation < 1.0f && currentRank < previousScores.size()) {
+					previousScores.get(currentRank).drawSmall(
 						g, scoreboardPosition, currentRank + 2, 1f + 5 * animation, data, currentScoreboardAlpha * (1f - animation), false
 					);
 				}
@@ -1110,6 +1110,7 @@ public class Game extends BasicGameState {
 				// add score to database and user stats
 				if (!unranked && !isReplay) {
 					ScoreDB.addScore(score);
+					UI.getNotificationManager().sendNotification("Added score");
 					User user = UserList.get().getCurrentUser();
 					user.add(data.getScore(), data.getScorePercent());
 					ScoreDB.updateUser(user);
@@ -1510,10 +1511,7 @@ public class Game extends BasicGameState {
 				pausedMousePosition = null;
 				if (!isLeadIn()) {
 					MusicController.resume();
-					if (useVideo) {
-						VideoLoader.loader.start();
-//						UI.getNotificationManager().sendNotification("Start 3");
-					}
+
 
 				}
 			}
@@ -1782,8 +1780,8 @@ public class Game extends BasicGameState {
 			previousScores = ScoreDB.getMapScoresExcluding(beatmap, replay == null ? null : replay.getReplayFilename());
 			lastRankUpdateTime = -1000;
 			if (previousScores != null)
-				currentRank = previousScores.length;
-			scoreboardVisible = previousScores.length > 0;
+				currentRank = previousScores.size();
+			scoreboardVisible = previousScores.size() > 0;
 			currentScoreboardAlpha = 0f;
 
 			// using local offset?
@@ -1815,10 +1813,8 @@ public class Game extends BasicGameState {
 		}
 
 		useVideo=!isReplay&&!disableVideo&&beatmap.video!=null&&Options.isBeatmapVideoEnabled()&&beatmap.video.isFile();
-		if(useVideo) {
+		if(useVideo)
 			VideoLoader.loader.makeVisible();
-			SKIP_OFFSET=1000000;
-		}
 //		if(useVideo&&lastTrackPosition==0)
 //			try {
 //				boolean sameFile=VideoLoader.loader.getPreparedFile().equals(beatmap.video.getAbsolutePath());
@@ -1866,7 +1862,6 @@ public class Game extends BasicGameState {
 		// replays
 		if (isReplay) {
 			GameMod.loadModState(previousMods);
-			VideoLoader.loader.makeInvisible();
 		}
 	}
 
@@ -2092,6 +2087,7 @@ public class Game extends BasicGameState {
 				MusicController.resume();
 			}
 			*/
+			VideoLoader.loader.seek(firstObjectTime - SKIP_OFFSET);
 			MusicController.setPosition(firstObjectTime - SKIP_OFFSET);
 			MusicController.setPitch(getCurrentPitch());
 			replaySkipTime = (isReplay) ? -1 : trackPosition;
@@ -2651,4 +2647,11 @@ public class Game extends BasicGameState {
 			BeatmapDB.updateLocalOffset(beatmap);
 		}
 	}
+
+
+
+
+
+
+
 }

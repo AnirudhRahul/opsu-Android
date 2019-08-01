@@ -12,12 +12,12 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import fluddokt.ex.DeviceInfo;
 import itdelatrisu.opsu.ErrorHandler;
 import itdelatrisu.opsu.GameImage;
 import itdelatrisu.opsu.Opsu;
@@ -233,6 +233,8 @@ public class GameOpsu extends com.badlogic.gdx.Game {
 	}
 
 	private void errorDialog(final String string, final Throwable e) {
+	    DeviceInfo.info.reportError(e);
+
 		dialogCnt++;
 		String tbodyString = "X";
 		if(e != null){
@@ -251,26 +253,28 @@ public class GameOpsu extends com.badlogic.gdx.Game {
 				if("CloseOpsu".equals(object)){
 					System.exit(0);
 				}
-				
 				if("R".equals(object)){
-					try {
-						System.out.println("Reporting");
-						Desktop.getDesktop().browse(
-							ErrorHandler.getIssueURI(title, e, body)
-						);
-					}  catch (IOException e) {
-						e.printStackTrace();
-					}
+					DeviceInfo.info.restart();
 				}
-				if("S".equals(object)){
-					
-				}
+//				if("R".equals(object)){
+//					try {
+//						System.out.println("Reporting");
+//						Desktop.getDesktop().browse(
+//							ErrorHandler.getIssueURI(title, e, body)
+//						);
+//					}  catch (IOException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//				if("S".equals(object)){
+//
+//				}
 				
 				dialogCnt--;
 				System.out.println("Dialog count:"+dialogCnt);
 			}
 			
-		}.button("Ignore and Continue","S").button("Report on github","R").button("Close Opsu", "CloseOpsu");
+		}.button("Ignore and Continue","S").button("Restart and Report Error","R").button("Close Opsu", "CloseOpsu");
 
 		Label tex =new Label(string+"\n"+bodyString, skin);
 		

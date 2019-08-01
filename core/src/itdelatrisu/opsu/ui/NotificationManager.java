@@ -18,13 +18,17 @@
 
 package itdelatrisu.opsu.ui;
 
-import fluddokt.opsu.fake.*;
-import fluddokt.opsu.fake.gui.MouseListener;
-import itdelatrisu.opsu.ui.animations.AnimationEquation;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import fluddokt.opsu.fake.Color;
+import fluddokt.opsu.fake.GameContainer;
+import fluddokt.opsu.fake.Graphics;
+import fluddokt.opsu.fake.Input;
+import fluddokt.opsu.fake.UnicodeFont;
+import fluddokt.opsu.fake.gui.MouseListener;
+import itdelatrisu.opsu.ui.animations.AnimationEquation;
 
 /*
 import org.newdawn.slick.Color;
@@ -295,7 +299,7 @@ public class NotificationManager {
 		int midX = container.getWidth() / 2, midY = container.getHeight() / 2;
 		float barHeight = Fonts.LARGE.getLineHeight() * (1f + 0.6f * Math.min(barNotifTimer * 15f / BAR_NOTIFICATION_TIME, 1f));
 		float oldAlphaB = Colors.BLACK_ALPHA.a, oldAlphaW = Colors.WHITE_ALPHA.a;
-		Colors.BLACK_ALPHA.a *= alpha;
+		Colors.BLACK_ALPHA.a *= 7*alpha;
 		Colors.WHITE_ALPHA.a = alpha;
 		g.setColor(Colors.BLACK_ALPHA);
 		g.fillRect(0, midY - barHeight / 2f, container.getWidth(), barHeight);
@@ -385,6 +389,7 @@ public class NotificationManager {
 		if (s != null) {
 			barNotif = s;
 			barNotifTimer = 0;
+
 		}
 	}
 

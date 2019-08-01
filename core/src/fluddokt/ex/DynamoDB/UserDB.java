@@ -34,7 +34,15 @@ public class UserDB {
     /** Total number of plays. */
     private int playsTotal;
 
+    private List<Integer> obtainedBages;
 
+    private List<String> friends;
+
+    private int tokens, friendLimit, consecutiveLogins;
+
+    private boolean topped;
+
+    private long lastLogin;
 
     /** Available profile icon identifier. */
     private List<Integer> icons;
@@ -66,24 +74,40 @@ public class UserDB {
         this.username = username;
     }
 
+    @DynamoDBAttribute(attributeName = "Badges")
+    public List<Integer> getBadges() {return obtainedBages;}
 
-    //SHA 256 hash implementation
-//    public String sha256(String a){
-//        MessageDigest digest = null;
-//        try {
-//            digest = MessageDigest.getInstance("SHA-256");
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        }
-//        byte[] hash = digest.digest(a.getBytes());
-//        return bytesToHex(hash);
-//    }
-//    private static String bytesToHex(byte[] bytes) {
-//        StringBuffer result = new StringBuffer();
-//        for (byte b : bytes) result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-//        return result.toString();
-//    }
+    public void setBadges(List<Integer> obtainedBages) {this.obtainedBages = obtainedBages;}
 
+    @DynamoDBAttribute(attributeName = "Tokens")
+    public int getTokens() {return tokens;}
+
+    public void setTokens(int tokens) {this.tokens = tokens;}
+
+    @DynamoDBAttribute(attributeName = "Friend Limit")
+    public int getFriendLimit() {return friendLimit;}
+
+    public void setFriendLimit(int friendLimit) {this.friendLimit = friendLimit;}
+
+    @DynamoDBAttribute(attributeName = "Consecutive Logins")
+    public int getConsecutiveLogins() {return consecutiveLogins;}
+
+    public void setConsecutiveLogins(int consecutiveLogins) {this.consecutiveLogins = consecutiveLogins;}
+
+    @DynamoDBAttribute(attributeName = "Topped")
+    public boolean getTopped() {return topped;}
+
+    public void setTopped(boolean topped) {this.topped = topped;}
+
+    @DynamoDBAttribute(attributeName = "Last Login")
+    public long getLastLogin() {return lastLogin;}
+
+    public void setLastLogin(long lastLogin) {this.lastLogin = lastLogin;}
+
+    @DynamoDBAttribute(attributeName = "Friends")
+    public List<String> getFriends() {return friends;}
+
+    public void setFriends(List<String> friends) {this.friends = friends;}
 
     @DynamoDBAttribute(attributeName = "Score")
     public long getScore() {return score;}

@@ -18,20 +18,25 @@
 
 package itdelatrisu.opsu.ui;
 
-import fluddokt.opsu.fake.*;
-import itdelatrisu.opsu.GameImage;
-import itdelatrisu.opsu.options.Options;
-
-
-/*
-import java.awt.Font;
-*/
 import java.awt.FontFormatException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+
+import fluddokt.opsu.fake.ColorEffect;
+import fluddokt.opsu.fake.Effect;
+import fluddokt.opsu.fake.Font;
+import fluddokt.opsu.fake.Log;
+import fluddokt.opsu.fake.SlickException;
+import fluddokt.opsu.fake.UnicodeFont;
+import itdelatrisu.opsu.GameImage;
+import itdelatrisu.opsu.options.Options;
+
+/*
+import java.awt.Font;
+*/
 
 /*
 import org.newdawn.slick.SlickException;
@@ -91,6 +96,7 @@ public class Fonts {
 		loadFont(MEDIUMBOLD, colorEffect, new UnicodeFont(fontCJK.deriveFont(Font.BOLD, fontBase * 3 / 2)));
 		loadFont(SMALL, colorEffect, new UnicodeFont(fontCJK.deriveFont(fontBase)));
 		loadFont(SMALLBOLD, colorEffect, new UnicodeFont(fontCJK.deriveFont(Font.BOLD, fontBase)));
+//		Log.("LARGELARGE"+(LARGE==null));
 	}
 
 	/**

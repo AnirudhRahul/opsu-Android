@@ -1,8 +1,8 @@
 package fluddokt.opsu.fake;
 
-import java.awt.event.KeyEvent;
-
 import com.badlogic.gdx.Gdx;
+
+import java.awt.event.KeyEvent;
 
 import fluddokt.opsu.fake.gui.GInputAdapter;
 import fluddokt.opsu.fake.gui.GUIContext;
@@ -91,8 +91,10 @@ public class TextField extends GInputAdapter {
 		if (hasFocus) {
 			if (character == KeyEvent.VK_BACK_SPACE)
 				str = str.substring(0, Math.max(str.length() - 1, 0));
-			else if (!Character.isISOControl(character))
+			else if (!Character.isISOControl(character)) {
 				str += character;
+			}
+
 			consumeEvent();
 		}
 	}

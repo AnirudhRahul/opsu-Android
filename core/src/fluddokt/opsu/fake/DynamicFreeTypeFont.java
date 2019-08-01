@@ -1,7 +1,5 @@
 package fluddokt.opsu.fake;
 
-import java.util.LinkedList;
-
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Pixmap.Blending;
@@ -21,6 +19,8 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.IntFloatMap;
 import com.badlogic.gdx.utils.IntMap;
 
+import java.util.LinkedList;
+
 public class DynamicFreeTypeFont {
 	static int PAD = 1;
 	FileHandle handle;
@@ -39,13 +39,12 @@ public class DynamicFreeTypeFont {
 		Library library = FreeType.initFreeType();
 		if (library == null)
 			throw new GdxRuntimeException("Couldn't initialize FreeType");
-		face = FreeType.newFace(library, font, 0);
-
+		face = library.newFace(font, 0);
 		if (face == null)
 			throw new GdxRuntimeException("Couldn't create face for font '"
 					+ font + "'");
 
-		if (!FreeType.setPixelSizes(face, 0, (int) Math.round(fontParam.size))) {
+		if (!face.setPixelSizes(0, (int) Math.round(fontParam.size))) {
 			throw new GdxRuntimeException("Couldn't set size for font '" + font
 					+ "'");
 		}
@@ -55,7 +54,7 @@ public class DynamicFreeTypeFont {
 		descent = FreeType.toInt(sizes.getDescender());
 		height = FreeType.toInt(sizes.getHeight());
 		// System.out.println("Face flag "+face.getFaceFlags());
-		useKerning = FreeType.hasKerning(face);
+//		useKerning = FreeType.hasKerning(face);
 
 		thiscnt = cnt++;
 	}
@@ -152,7 +151,7 @@ public class DynamicFreeTypeFont {
 			tface = backupface;
 			tparam = backParam;
 		}
-		FreeType.loadChar(tface, c,
+		tface.loadChar( c,
 		// FreeType.FT_LOAD_RENDER
 		// FreeType.FT_LOAD_DEFAULT
 				fontParam.size < 16 ? FreeType.FT_LOAD_DEFAULT : 
@@ -161,7 +160,7 @@ public class DynamicFreeTypeFont {
 		// FreeType.FT_LOAD_NO_AUTOHINT
 		);// FT_LOAD_MONOCHROME FT_RENDER_MODE_LIGHT
 		GlyphSlot slot = tface.getGlyph();
-		FreeType.renderGlyph(slot, FreeType.FT_RENDER_MODE_LIGHT);
+		slot.renderGlyph(FreeType.FT_RENDER_MODE_LIGHT);
 		Bitmap bitmap = slot.getBitmap();
 
 		// System.out.println("Pixel Mode "+bitmap.getPixelMode());
@@ -245,13 +244,13 @@ public class DynamicFreeTypeFont {
 			maxHeight = pixmap.getHeight();
 		}
 
-		Pixmap.setBlending(Blending.None);
+		curPixmap.setBlending(Blending.None);
 		curPixmap.drawPixmap(pixmap, x, y);
 		if((tparam.style&Font.BOLD) > 0){
-			Pixmap.setBlending(Blending.SourceOver);
+			curPixmap.setBlending(Blending.SourceOver);
 			curPixmap.drawPixmap(pixmap, x, y);
 			curPixmap.drawPixmap(pixmap, x, y);
-			Pixmap.setBlending(Blending.None);
+			curPixmap.setBlending(Blending.None);
 		}
 		
 
@@ -316,7 +315,7 @@ public class DynamicFreeTypeFont {
 
 	private float getCharWidth(char c) {
 		Face tface = charExist(face, c) ? face : backupface;
-		FreeType.loadChar(tface, c,
+		tface.loadChar(c,
 				fontParam.size < 16 ? FreeType.FT_LOAD_DEFAULT : 
 									FreeType.FT_LOAD_NO_HINTING
 				 |FreeType.FT_LOAD_NO_BITMAP
@@ -327,7 +326,7 @@ public class DynamicFreeTypeFont {
 	}
 	
 	private boolean charExist(Face face, char c) {
-		return FreeType.getCharIndex(face, c) != 0;
+		return face.getCharIndex(c) != 0;
 	}
 
 	public int getLineHeight() {

@@ -470,6 +470,7 @@ public class Options {
 				UI.resetFPSDisplay();
 			}
 		},
+		USE_WIFI ("", "", "", false),
 		SHOW_UNICODE ("Prefer metadata in original language", "ShowUnicode", "Where available, song titles will be shown in their native language (and character-set).", false) {
 			@Override
 			public void toggle(GameContainer container) {
@@ -1213,6 +1214,10 @@ public class Options {
 	 * @return the alpha level [0, 1]
 	 */
 	public static float getBackgroundDim() { return (100 - GameOption.BACKGROUND_DIM.getIntegerValue()) / 100f; }
+	public static void setBackgroundDim(float in) {
+		GameOption.BACKGROUND_DIM.val= (int) (100-100f*in);
+	}
+
 	public static float getHitCirleScale() { return GameOption.HITCIRCLE_SCALE.getIntegerValue()/100f; }
 
 	/**

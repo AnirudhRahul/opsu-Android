@@ -315,7 +315,7 @@ public class DownloadNode {
 
 			@Override
 			public void error() {
-				UI.getNotificationManager().sendNotification("Download failed due to a connection error. Please try another server", Color.red);
+				UI.getNotificationManager().sendNotification("Download failed due to a server error. Please select another beatmap", Color.red);
 			}
 		});
 		download.setRequestHeaders(server.getDownloadRequestHeaders());

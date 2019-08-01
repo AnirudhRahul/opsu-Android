@@ -25,6 +25,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import fluddokt.ex.DynamoDB.DynamoDB;
+import itdelatrisu.opsu.ui.badges.BadgeGroup;
+
 /**
  * User profile.
  */
@@ -39,28 +42,41 @@ public class User implements Comparable<User> {
 	private String hashedPassword="";
 
 	/** Total score. */
-	private long score;
+	public long score;
 
 	/** Total accuracy. */
-	private double accuracy;
+	public double accuracy;
 
 	/** Total number of plays passed. */
-	private int playsPassed;
+	public int playsPassed;
 
 	/** Total number of plays. */
-	private int playsTotal;
+	public int playsTotal;
 
 	/** Current level. */
-	private int level;
+	public int level;
 
 	/** Next level progress. */
-	private double levelProgress;
+	public double levelProgress;
 
 	/** Profile icon identifier. */
-	private int icon;
+	public int icon;
+
+	//An array representing the badges this account obtained
+	private List<Integer> obtainedBadges;
 
 	/** Lis of available Icons*/
 	private List<Integer> availableIcon;
+
+	public int tokens = 0, friendLimit = 5, consecutiveLogins = 0;
+
+	public boolean topped = false;
+
+	public long lastLogin = 0;
+
+	private List<String> friendNames = new ArrayList<>();
+
+	private ArrayList<User> friendsList;
 
 	/**
 	 * Creates a new user with the given name and icon.
@@ -126,6 +142,12 @@ public class User implements Comparable<User> {
 
 	/** Returns the user's name. */
 	public String getName() { return name; }
+
+	/** Gets the name's of all the user's friends. */
+	public List<String> getFriendNames() { return friendNames; }
+
+	// Gets badges
+	public List<Integer> getBadges() { return obtainedBadges; }
 
 	//Returns the user's password
 	public String getPassword() { return password; }
@@ -221,6 +243,12 @@ public class User implements Comparable<User> {
 	/** Sets the user's name. */
 	public void setName(String name) { this.name = name; }
 
+	/** Sets the name's of all the user's friends. */
+	public void setFriendNames(List<String> friendNames) { this.friendNames = friendNames; }
+
+	/** Sets the user's name. */
+	public void setBadges(List<Integer> obtainedBadges) { this.obtainedBadges = obtainedBadges;}
+
 	/** Sets the user's password. */
 	public void setPassword(String password) { this.password = password; hashedPassword=sha256(password);}
 
@@ -254,5 +282,46 @@ public class User implements Comparable<User> {
         return result.toString();
     }
 
+    public void sendUserToDB(){
+		//Update database online
+		DynamoDB.database.addUserToDataBase(this);
+    }
+
+    public boolean updateBadges(){
+		boolean changeMade=false;
+		for(int groupNumber=0;groupNumber<BadgeGroup.ALL_BADGES.length;groupNumber++){
+			BadgeGroup group=BadgeGroup.ALL_BADGES[groupNumber];
+			if(group.getName().equals("FRIENDS")){
+				int friendAmount=friendNames.size();
+				for(int badgeIndex=group.getBadges().length-1; badgeIndex>=0; badgeIndex--){
+					if(friendAmount>=group.getBadge(badgeIndex).getCount()) {
+						changeMade= changeMade || group.obtain(this, badgeIndex, groupNumber);
+						break;
+					}
+				}
+			}
+			else if(group.getName().equals("LOGIN")){
+				for(int badgeIndex=group.getBadges().length-1; badgeIndex>=0; badgeIndex--){
+					if(consecutiveLogins>=group.getBadge(badgeIndex).getCount()) {
+						changeMade = changeMade || group.obtain(this, badgeIndex, groupNumber);
+						break;
+					}
+				}
+			}
+			else if(group.getName().equals("KING")){
+//				for(int badgeIndex=group.getBadges().length-1; badgeIndex>=0; badgeIndex--){
+//					if(topped){
+//						changeMade = changeMade || group.obtain(this, badgeIndex, groupNumber);
+//						break;
+//					}
+//				}
+				if(topped){
+					changeMade = changeMade || group.obtain(this, 0, groupNumber);
+				}
+			}
+
+		}
+		return changeMade;
+	}
 
 }

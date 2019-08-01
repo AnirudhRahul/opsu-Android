@@ -54,6 +54,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.opsu.fake.Animation;
 import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.File;
@@ -70,6 +71,7 @@ import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.replay.PlaybackSpeed;
 import itdelatrisu.opsu.ui.Fonts;
 import itdelatrisu.opsu.ui.UI;
+import itdelatrisu.opsu.user.User;
 import itdelatrisu.opsu.user.UserButton;
 import itdelatrisu.opsu.user.UserList;
 
@@ -200,6 +202,20 @@ public class Utils {
 				"This can usually be resolved by updating your graphics drivers.",
 				Color.red
 			);
+		}
+
+		//Synchronize user
+		User currentUser = UserList.get().getCurrentUser();
+
+		if(!currentUser.getName().equals("Guest")) {
+			try{
+				DynamoDB.database.updateUser(currentUser);
+				Options.GameOption.USE_WIFI.setValue(true);
+			}catch (Exception e){
+				UI.getNotificationManager().sendNotification("Please restart with an internet connection to use online features"+e.toString());
+				Options.GameOption.USE_WIFI.setValue(false);
+				Log.error(e);
+			}
 		}
 	}
 

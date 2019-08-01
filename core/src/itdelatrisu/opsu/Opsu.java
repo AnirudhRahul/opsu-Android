@@ -43,6 +43,7 @@ import itdelatrisu.opsu.states.Game;
 import itdelatrisu.opsu.states.GamePauseMenu;
 import itdelatrisu.opsu.states.GameRanking;
 import itdelatrisu.opsu.states.MainMenu;
+import itdelatrisu.opsu.states.ProfileMenu;
 import itdelatrisu.opsu.states.SongMenu;
 import itdelatrisu.opsu.states.Splash;
 import itdelatrisu.opsu.ui.UI;
@@ -80,7 +81,8 @@ public class Opsu extends StateBasedGame {
 		STATE_GAME          = 4,
 		STATE_GAMEPAUSEMENU = 5,
 		STATE_GAMERANKING   = 6,
-		STATE_DOWNLOADSMENU = 7;
+		STATE_DOWNLOADSMENU = 7,
+		STATE_PROFILEMENU	= 8;
 
 	/**
 	 * Constructor.
@@ -100,6 +102,7 @@ public class Opsu extends StateBasedGame {
 		addState(new GamePauseMenu(STATE_GAMEPAUSEMENU));
 		addState(new GameRanking(STATE_GAMERANKING));
 		addState(new DownloadsMenu(STATE_DOWNLOADSMENU));
+		addState(new ProfileMenu(STATE_PROFILEMENU));
 	}
 
 	/**

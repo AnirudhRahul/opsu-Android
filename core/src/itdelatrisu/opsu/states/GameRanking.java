@@ -49,12 +49,14 @@ import itdelatrisu.opsu.audio.MusicController;
 import itdelatrisu.opsu.audio.SoundController;
 import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.beatmap.Beatmap;
+import itdelatrisu.opsu.leaderboard.TopGlobal;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.replay.Replay;
 import itdelatrisu.opsu.ui.MenuButton;
 import itdelatrisu.opsu.ui.UI;
 import itdelatrisu.opsu.ui.animations.AnimatedValue;
 import itdelatrisu.opsu.ui.animations.AnimationEquation;
+import itdelatrisu.opsu.user.User;
 import itdelatrisu.opsu.user.UserList;
 
 /*
@@ -105,6 +107,7 @@ public class GameRanking extends BasicGameState {
 	private final int state;
 	private Input input;
 	private ScoreData scoreData;
+	private Beatmap beatmap;
 	public GameRanking(int state) {
 		this.state = state;
 	}
@@ -141,7 +144,6 @@ public class GameRanking extends BasicGameState {
 		int height = container.getHeight();
 		int mouseX = input.getMouseX(), mouseY = input.getMouseY();
 
-		Beatmap beatmap = MusicController.getBeatmap();
 
 		// background
 		float parallaxX = 0, parallaxY = 0;
@@ -248,8 +250,15 @@ public class GameRanking extends BasicGameState {
 			returnToGame = true;
 		}
 		else if (!GameMod.AUTO.isActive() && leaderButtonPressed && !UserList.get().getCurrentUser().getName().equals("Guest") && scoreData.playerName.equals(UserList.get().getCurrentUser().getName())&&scoreData.settings==0) {
-			InterstitialAdLoader.ad.loadAndShow();
-			execute(new leaderboard());
+			if(Options.GameOption.USE_WIFI.getBooleanValue()){
+				InterstitialAdLoader.ad.loadAndShow();
+				execute(new leaderboard());
+				TopGlobal.mode.addScore(beatmap, scoreData);
+			}
+			else
+				UI.getNotificationManager().sendNotification("Please restart with an internet connection to use online features");
+
+
 			returnToGame = false;
 		}
 		else if(!GameMod.AUTO.isActive() && leaderButtonPressed && !UserList.get().getCurrentUser().getName().equals("Guest") && !scoreData.playerName.equals(UserList.get().getCurrentUser().getName())&&scoreData.settings==0){
@@ -263,7 +272,7 @@ public class GameRanking extends BasicGameState {
 
 
 		if (returnToGame) {
-			Beatmap beatmap = MusicController.getBeatmap();
+			beatmap = MusicController.getBeatmap();
 			gameState.loadBeatmap(beatmap);
 			SoundController.playSound(SoundEffect.MENUHIT);
 			game.enterState(Opsu.STATE_GAME, new EasedFadeOutTransition(), new FadeInTransition());
@@ -298,6 +307,7 @@ public class GameRanking extends BasicGameState {
 			try {
 				DynamoDB.database.addBeatmapScore(scoreData.timestamp, scoreData.MID, scoreData.MSID, scoreData.title, scoreData.creator, scoreData.artist, scoreData.version, scoreData.hit300, scoreData.hit100, scoreData.hit50, scoreData.geki, scoreData.katu, scoreData.miss, scoreData.score, scoreData.combo, scoreData.perfect, scoreData.mods, scoreData.playerName);
 				UI.getNotificationManager().sendNotification("Score sent");
+
 				DynamoDB.database.addUserToDataBase(UserList.get().getCurrentUser());
 				UI.getNotificationManager().sendNotification("User Info Synced");
 			}catch (Exception e){UI.getNotificationManager().sendNotification("Error\n"+e.getMessage());}
@@ -308,6 +318,7 @@ public class GameRanking extends BasicGameState {
 	public void enter(GameContainer container, StateBasedGame game)
 			throws SlickException {
 		UI.enter();
+		beatmap = MusicController.getBeatmap();
 		Display.setTitle(game.getTitle());
 		if (!data.isGameplay()) {
 			if (!MusicController.isTrackDimmed())
@@ -346,8 +357,35 @@ public class GameRanking extends BasicGameState {
 				UI.getNotificationManager().sendNotification("Can't submit scores from a different account");
 			else if(!fairSettings)
 				UI.getNotificationManager().sendNotification("Can't submit scores without having the default fixed Settings "+scoreData.settings);
-			else
+			else if(!Options.GameOption.USE_WIFI.getBooleanValue()){
+				UI.getNotificationManager().sendNotification("Please restart with an internet connection to use online features");
+			}
+			else {
+				long currentTime = System.currentTimeMillis();
+				long day = TimeUnit.DAYS.toMillis(1);
+				User currentUser = UserList.get().getCurrentUser();
+				long diff = currentTime - currentUser.lastLogin;
+				if(diff>=day && diff<= 2*day){
+					currentUser.consecutiveLogins++;
+					currentUser.lastLogin = currentTime;
+				}
+				else
+					currentUser.consecutiveLogins=0;
+
+				if(currentUser.consecutiveLogins==0){
+					currentUser.consecutiveLogins++;
+					currentUser.lastLogin = currentTime;
+				}
+				boolean changeMade = currentUser.updateBadges();
+				if(changeMade)
+					UI.getNotificationManager().sendNotification("Congratulations you have been awarded a badge");
+
+				TopGlobal.mode.addScore(beatmap, scoreData);
+				//Update scores for when you go back
+				TopGlobal.mode.getCache();
 				execute(new leaderboardAndUserUpdate());
+
+			}
 			InterstitialAdLoader.ad.load();
 		}
 

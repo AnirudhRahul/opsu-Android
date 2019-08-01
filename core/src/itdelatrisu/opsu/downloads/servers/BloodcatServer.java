@@ -42,11 +42,6 @@ import itdelatrisu.opsu.downloads.DownloadNode;
 import org.newdawn.slick.util.Log;
 */
 
-/**
- * Download server: http://bloodcat.com/osu/
- * <p>
- * <i>This server uses captchas as of March 2017.</i>
- */
 public class BloodcatServer extends DownloadServer {
 	/** Server name. */
 	private static final String SERVER_NAME = "Bloodcat";
@@ -80,6 +75,7 @@ public class BloodcatServer extends DownloadServer {
 		try {
 			// read JSON
 			String search = String.format(Locale.US,SEARCH_URL, URLEncoder.encode(query, "UTF-8"), rankedOnly ? "1" : "", page);
+//			UI.getNotificationManager().sendNotification(search);
 			JSONArray arr = Utils.readJsonArrayFromUrl(new URL(search));
 			if (arr == null) {
 				this.totalResults = -1;
@@ -105,9 +101,12 @@ public class BloodcatServer extends DownloadServer {
 			if (nodes.length == PAGE_LIMIT)
 				resultCount++;
 			this.totalResults = resultCount;
+//			UI.getNotificationManager().sendNotification("Results are perfect");
 		} catch (MalformedURLException | UnsupportedEncodingException e) {
 			ErrorHandler.error(String.format("Problem loading result list for query '%s'.", query), e, true);
+			Log.error(e);
 		} catch (JSONException e) {
+
 			Log.error(e);
 		}
 		return nodes;
@@ -120,7 +119,7 @@ public class BloodcatServer extends DownloadServer {
 	public int totalResults() { return totalResults; }
 
 	@Override
-	public boolean isDownloadInBrowser() { return true; /* uses captchas */ }
+	public boolean isDownloadInBrowser() { return false; /* stopped using captchas */ }
 
 	/**
 	 * Returns a formatted date string from a raw date.

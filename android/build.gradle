@@ -1,8 +1,8 @@
 
 
 android {
-    buildToolsVersion '25.0.0'
-    compileSdkVersion 26
+    buildToolsVersion '28.0.3'
+    compileSdkVersion 28
 
     sourceSets {
         main {
@@ -15,15 +15,14 @@ android {
             jniLibs.srcDir 'libs'
         }
 
-        instrumentTest.setRoot('tests')
+        androidTest.setRoot('tests')
     }
     defaultConfig {
-        versionCode 42
-        minSdkVersion 15
-        manifestPlaceholders = [onesignal_app_id: "576e9c68-832b-4961-a415-f6b67b4541c9",
-                                // Project number pulled from dashboard, local value is ignored.
-                                onesignal_google_project_number: "REMOTE"]
+        versionCode 48
+        minSdkVersion 16
+        multiDexEnabled true
     }
+
     dexOptions {
         jumboMode true
     }
@@ -43,12 +42,16 @@ task copyAndroidNatives() {
     file("libs/armeabi/").mkdirs();
     file("libs/armeabi-v7a/").mkdirs();
     file("libs/x86/").mkdirs();
+    file("libs/arm64-v8a/").mkdirs()
+    file("libs/x86_64/").mkdirs()
 
     configurations.natives.files.each { jar ->
         def outputDir = null
         if (jar.name.endsWith("natives-armeabi-v7a.jar")) outputDir = file("libs/armeabi-v7a")
         if (jar.name.endsWith("natives-armeabi.jar")) outputDir = file("libs/armeabi")
         if (jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
+        if (jar.name.endsWith("natives-arm64-v8a.jar")) outputDir = file("libs/arm64-v8a")
+        if (jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
         if (outputDir != null) {
             copy {
                 from zipTree(jar)
@@ -87,38 +90,7 @@ task run(type: Exec) {
     def adb = path + "/platform-tools/adb"
     commandLine "$adb", 'shell', 'am', 'start', '-n', 'com.mygdx.game.android/com.mygdx.game.android.AndroidLauncher'
 }
-// sets up the Android Eclipse project, using the old Ant based build.
-eclipse {
-    // need to specify Java source sets explicitely, SpringSource Gradle Eclipse plugin
-    // ignores any nodes added in classpath.file.withXml
-    sourceSets {
-        main {
-            java.srcDirs "src", 'gen'
-        }
-    }
 
-    jdt {
-        sourceCompatibility = 1.6
-        targetCompatibility = 1.6
-    }
-
-    classpath {
-        plusConfigurations += [project.configurations.compile]
-        containers 'com.android.ide.eclipse.adt.ANDROID_FRAMEWORK', 'com.android.ide.eclipse.adt.LIBRARIES'
-    }
-
-    project {
-        //linkedResource name: 'assets/res', type: '2', location: 'PARENT-1-PROJECT_LOC/core/res'
-
-        name = appName + "-android"
-        natures 'com.android.ide.eclipse.adt.AndroidNature'
-        buildCommands.clear();
-        buildCommand "com.android.ide.eclipse.adt.ResourceManagerBuilder"
-        buildCommand "com.android.ide.eclipse.adt.PreCompilerBuilder"
-        buildCommand "org.eclipse.jdt.core.javabuilder"
-        buildCommand "com.android.ide.eclipse.adt.ApkBuilder"
-    }
-}
 // sets up the Android Idea project, using the old Ant based build.
 idea {
     module {
@@ -142,4 +114,10 @@ idea {
     }
 }
 dependencies {
+    compile 'com.google.android.gms:play-services-ads:18.1.1'
+    compile 'com.google.firebase:firebase-core:17.0.1'
+    compile 'com.crashlytics.sdk.android:crashlytics:2.10.1'
 }
+
+apply plugin: 'io.fabric'
+apply plugin: 'com.google.gms.google-services'

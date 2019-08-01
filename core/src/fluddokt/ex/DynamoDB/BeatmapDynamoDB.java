@@ -14,7 +14,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
 //Essentially a copy of a scoreData class that can Communicate with DynamoDB
 @DynamoDBTable(tableName = "Beatmap")
 public class BeatmapDynamoDB {
-    private long timestamp;
+    private String username;
     private int MID;
     private int MSID;
     private String title;
@@ -31,7 +31,7 @@ public class BeatmapDynamoDB {
     private int combo;
     private boolean perfect;
     private int mods;
-    private String username;
+    private long timestamp;
 
     @DynamoDBAttribute(attributeName = "Artist")
     public String getArtist() {

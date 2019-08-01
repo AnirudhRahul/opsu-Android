@@ -20,15 +20,11 @@ package itdelatrisu.opsu.states;
 
 import com.badlogic.gdx.math.Rectangle;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Stack;
 
-import fluddokt.ex.DeviceInfo;
-import fluddokt.ex.DynamoDB.DynamoDB;
 import fluddokt.ex.InterstitialAdLoader;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.FadeInTransition;
@@ -51,7 +47,6 @@ import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.beatmap.Beatmap;
 import itdelatrisu.opsu.beatmap.BeatmapSetList;
 import itdelatrisu.opsu.beatmap.BeatmapSetNode;
-import itdelatrisu.opsu.db.ScoreDB;
 import itdelatrisu.opsu.downloads.Updater;
 import itdelatrisu.opsu.options.OptionGroup;
 import itdelatrisu.opsu.options.Options;
@@ -61,12 +56,10 @@ import itdelatrisu.opsu.ui.Colors;
 import itdelatrisu.opsu.ui.Fonts;
 import itdelatrisu.opsu.ui.MenuButton;
 import itdelatrisu.opsu.ui.MenuButton.Expand;
-import itdelatrisu.opsu.ui.NotificationManager.NotificationListener;
 import itdelatrisu.opsu.ui.StarFountain;
 import itdelatrisu.opsu.ui.UI;
 import itdelatrisu.opsu.ui.animations.AnimatedValue;
 import itdelatrisu.opsu.ui.animations.AnimationEquation;
-import itdelatrisu.opsu.user.User;
 import itdelatrisu.opsu.user.UserButton;
 import itdelatrisu.opsu.user.UserList;
 import itdelatrisu.opsu.user.UserSelectOverlay;
@@ -125,6 +118,9 @@ public class MainMenu extends BasicGameState {
 
 	/** Button linking to Downloads menu. */
 	private MenuButton downloadsButton;
+
+	/** Button linking to Profile State. */
+	private MenuButton profileButton;
 
 	/** Button linking to repository. */
 	private MenuButton repoButton;
@@ -265,6 +261,13 @@ public class MainMenu extends BasicGameState {
 		downloadsButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
 		downloadsButton.setHoverExpand(1.03f, Expand.LEFT);
 
+		Image profileImg = GameImage.PROFILE.getImage();
+		profileButton = new MenuButton(profileImg, width*0.016f, height / 2f);
+		profileButton.setHoverAnimationDuration(350);
+		profileButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
+		profileButton.setHoverExpand(1.03f, Expand.RIGHT);
+
+
 		// initialize repository button
 		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {  // only if a webpage can be opened
 			Image repoImg = GameImage.REPOSITORY.getImage();
@@ -375,6 +378,8 @@ public class MainMenu extends BasicGameState {
 		// draw downloads button
 		downloadsButton.draw();
 
+		//draw profile button
+		profileButton.draw();
 
 		// draw logo (pulsing)
 		Float position = MusicController.getBeatProgress();
@@ -481,6 +486,7 @@ public class MainMenu extends BasicGameState {
 				Utils.getTimeString((int) (System.currentTimeMillis() - programStartTime) / 1000)),
 			Colors.WHITE_FADE
 		);
+
 		lineHeight += Fonts.MEDIUM.getLineHeight() * 0.925f;
 		Fonts.MEDIUM.drawString(marginX, topMarginY + lineHeight,
 			String.format("It is currently %s.",
@@ -519,6 +525,7 @@ public class MainMenu extends BasicGameState {
 			restartButton.autoHoverUpdate(delta, false);
 		}
 		downloadsButton.hoverUpdate(delta, mouseX, mouseY);
+		profileButton.hoverUpdate(delta, mouseX, mouseY);
 		// ensure only one button is in hover state at once
 		boolean noHoverUpdate = musicPositionBarContains(mouseX, mouseY);
 		boolean contains = musicPlay.contains(mouseX, mouseY);
@@ -648,60 +655,65 @@ public class MainMenu extends BasicGameState {
 	public void enter(GameContainer container, StateBasedGame game)
 			throws SlickException {
 		InterstitialAdLoader.ad.load();
+
 //		UserList.get().removeInvalidUsers();
 //		UI.getNotificationManager().sendNotification(UserList.get().getUsers().toString());
-		if(!DeviceInfo.info.isSynced()&& Options.GameOption.SYNC_USER_INFO.getBooleanValue()) {
-			//Sync player info if the player is not playing as a guest
-			InterstitialAdLoader.ad.loadAndShow();
-			ArrayList<User> usersToSync=new ArrayList<>();
-			usersToSync.addAll(ScoreDB.getUsers());
-			for(User cur:usersToSync)
-				UI.getNotificationManager().sendNotification(cur.getName()+" "+cur.getPassword());
-
-			for(User cur:usersToSync)
-				if(!cur.getName().equals("Guest")&&DynamoDB.database.dataBaseContainsUsername(cur.getName())) {
-					User fromDB=DynamoDB.database.getUserFromDB(cur.getName());
-						if(fromDB.getScore()!=0) {
-							User mergedUser=DynamoDB.database.getUserFromDB(cur.getName()).mergeUser(cur);
-							//Update user locally as well
-							ScoreDB.updateUser(mergedUser);
-							DynamoDB.database.addUserToDataBase(mergedUser);
-						}
-						else
-							DynamoDB.database.addUserToDataBase(cur);
-				}
-			UserList.create();
-			UI.getNotificationManager().sendNotification("Account Info Synced");
-			DeviceInfo.info.setSynced(true);
-		}
+//		if(!DeviceInfo.info.isSynced()&& Options.GameOption.SYNC_USER_INFO.getBooleanValue() && Options.GameOption.USE_WIFI.getBooleanValue()) {
+//			//Sync player info if the player is not playing as a guest
+//			InterstitialAdLoader.ad.loadAndShow();
+//			ArrayList<User> usersToSync=new ArrayList<>();
+//			usersToSync.addAll(ScoreDB.getUsers());
+//			for(User cur:usersToSync)
+//				UI.getNotificationManager().sendNotification(cur.getName()+" "+cur.getPassword());
+//
+//			for(User cur:usersToSync)
+//				if(!cur.getName().equals("Guest")&&DynamoDB.database.dataBaseContainsUsername(cur.getName())) {
+//					User fromDB=DynamoDB.database.getUserFromDB(cur.getName());
+//						if(fromDB.getScore()!=0) {
+//							User mergedUser=DynamoDB.database.getUserFromDB(cur.getName()).mergeUser(cur);
+//							//Update user locally as well
+//							ScoreDB.updateUser(mergedUser);
+//							DynamoDB.database.addUserToDataBase(mergedUser);
+//						}
+//						else
+//							DynamoDB.database.addUserToDataBase(cur);
+//				}
+//			UserList.create();
+//			UI.getNotificationManager().sendNotification("Account Info Synced");
+//			DeviceInfo.info.setSynced(true);
+//		}
 
 		float t = com.badlogic.gdx.Gdx.graphics.getWidth()/com.badlogic.gdx.Gdx.graphics.getPpiX();
 		System.out.println("screen size = "+t);
 		UI.enter();
-		if (!enterNotification) {
-			if (Updater.get().getStatus() == Updater.Status.UPDATE_AVAILABLE) {
-				UI.getNotificationManager().sendNotification("A new update is available!", Colors.GREEN);
-				enterNotification = true;
-			} else if (Updater.get().justUpdated()) {
-				String updateMessage = OpsuConstants.PROJECT_NAME + " is now up to date!";
-				final String version = Updater.get().getCurrentVersion();
-				if (version != null && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-					updateMessage += "\nClick to see what changed!";
-					UI.getNotificationManager().sendNotification(updateMessage, Colors.GREEN, new NotificationListener() {
-						@Override
-						public void click() {
-							try {
-								Desktop.getDesktop().browse(OpsuConstants.getChangelogURI(version));
-							} catch (IOException e) {
-								UI.getNotificationManager().sendBarNotification("The web page could not be opened.");
-							}
-						}
-					});
-				} else
-					UI.getNotificationManager().sendNotification(updateMessage);
-				enterNotification = true;
-			}
-		}
+
+//		UI.getNotificationManager().sendNotification("Name:"+UserList.get().getCurrentUser().toString()+"Badges:\n"+(UserList.get().getCurrentUser().getBadges()));
+//		UI.getNotificationManager().sendNotification("Name:"+UserList.get().getCurrentUser().toString()+"Friends:\n"+(UserList.get().getCurrentUser().getFriendNames()));
+
+//		if (!enterNotification) {
+//			if (Updater.get().getStatus() == Updater.Status.UPDATE_AVAILABLE) {
+//				UI.getNotificationManager().sendNotification("A new update is available!", Colors.GREEN);
+//				enterNotification = true;
+//			} else if (Updater.get().justUpdated()) {
+//				String updateMessage = OpsuConstants.PROJECT_NAME + " is now up to date!";
+//				final String version = Updater.get().getCurrentVersion();
+//				if (version != null && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+//					updateMessage += "\nClick to see what changed!";
+//					UI.getNotificationManager().sendNotification(updateMessage, Colors.GREEN, new NotificationListener() {
+//						@Override
+//						public void click() {
+//							try {
+//								Desktop.getDesktop().browse(OpsuConstants.getChangelogURI(version));
+//							} catch (IOException e) {
+//								UI.getNotificationManager().sendBarNotification("The web page could not be opened.");
+//							}
+//						}
+//					});
+//				} else
+//					UI.getNotificationManager().sendNotification(updateMessage);
+//				enterNotification = true;
+//			}
+//		}
 
 		// reset measure info
 		lastMeasureProgress = 0f;
@@ -725,6 +737,8 @@ public class MainMenu extends BasicGameState {
 		restartButton.resetHover();
 		if (!downloadsButton.contains(mouseX, mouseY))
 			downloadsButton.resetHover();
+		if(!profileButton.contains(mouseX, mouseY))
+			profileButton.resetHover();
 		if (!userButton.contains(mouseX, mouseY))
 			userButton.resetHover();
 
@@ -797,6 +811,19 @@ public class MainMenu extends BasicGameState {
 			SoundController.playSound(SoundEffect.MENUHIT);
 			game.enterState(Opsu.STATE_DOWNLOADSMENU, new EasedFadeOutTransition(), new FadeInTransition());
 			return;
+		}
+
+		// profile button actions
+		if (profileButton.contains(x, y)) {
+//			if(UserList.get().getCurrentUser().getBadges()!=null && !Options.GameOption.USE_WIFI.getBooleanValue()) {
+//				UI.getNotificationManager().sendNotification("Please restart while connected to the internet to access your profile");
+//				UI.getNotificationManager().sendNotification(!Options.GameOption.USE_WIFI.getBooleanValue()+"");
+//				return;
+//			}
+//			SoundController.playSound(SoundEffect.MENUHIT);
+//			game.enterState(Opsu.STATE_PROFILEMENU, new EasedFadeOutTransition(), new FadeInTransition());
+			UI.getNotificationManager().sendNotification("Coming soon");
+//			return;
 		}
 
 		// repository button actions
@@ -973,6 +1000,7 @@ public class MainMenu extends BasicGameState {
 		updateButton.resetHover();
 		restartButton.resetHover();
 		downloadsButton.resetHover();
+		profileButton.resetHover();
 		userButton.resetHover();
 	}
 

@@ -18,11 +18,9 @@
 
 package itdelatrisu.opsu.downloads.servers;
 
-import fluddokt.opsu.fake.Log;
-
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.Utils;
-import itdelatrisu.opsu.downloads.DownloadNode;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -33,10 +31,14 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import fluddokt.ex.DeviceInfo;
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.downloads.DownloadNode;
+import itdelatrisu.opsu.ui.UI;
 /*
 import org.newdawn.slick.util.Log;
 */
@@ -48,7 +50,7 @@ public class RippleServer extends DownloadServer {
 	private static final String SERVER_NAME = "Ripple";
 
 	/** Formatted download URL: {@code beatmapSetID} */
-	private static final String DOWNLOAD_URL = "https://storage.ripple.moe/%d.osz";
+	private static final String DOWNLOAD_URL = "https://storage.ripple.moe/d/%d";
 
 	/** Formatted search URL: {@code query,amount,offset} */
 	private static final String SEARCH_URL = "https://storage.ripple.moe/api/search?query=%s&mode=0&amount=%d&offset=%d";
@@ -70,7 +72,10 @@ public class RippleServer extends DownloadServer {
 
 	@Override
 	public String getDownloadURL(int beatmapSetID) {
-		return String.format(DOWNLOAD_URL, beatmapSetID);
+//		UI.getNotificationManager().sendNotification(""+beatmapSetID);
+//		UI.getNotificationManager().sendNotification(String.format(Locale.US, DOWNLOAD_URL, beatmapSetID));
+
+		return String.format(Locale.US, DOWNLOAD_URL, beatmapSetID);
 	}
 
 	@Override
@@ -81,20 +86,19 @@ public class RippleServer extends DownloadServer {
 
 			// read JSON
 			int offset = (page - 1) * PAGE_LIMIT;
-			String search = String.format(SEARCH_URL, URLEncoder.encode(query, "UTF-8"), PAGE_LIMIT, offset);
+			String search = String.format(Locale.US, SEARCH_URL, URLEncoder.encode(query, "UTF-8"), PAGE_LIMIT, offset);
 			if (rankedOnly)
 				search += "&status=1";
-			JSONObject json = Utils.readJsonObjectFromUrl(new URL(search));
-			if (json == null || !json.has("Ok") || !json.getBoolean("Ok") || !json.has("Sets") || json.isNull("Sets")) {
-				this.totalResults = -1;
-				return null;
-			}
-
+			JSONArray json = Utils.readJsonArrayFromUrl(new URL(search));
+//			if (json == null || !json.has("Ok") || !json.getBoolean("Ok") || !json.has("Sets") || json.isNull("Sets")) {
+//				this.totalResults = -1;
+//				return null;
+//			}
+//			json.length();
 			// parse result list
-			JSONArray arr = json.getJSONArray("Sets");
-			nodes = new DownloadNode[arr.length()];
+			nodes = new DownloadNode[json.length()];
 			for (int i = 0; i < nodes.length; i++) {
-				JSONObject item = arr.getJSONObject(i);
+				JSONObject item = json.getJSONObject(i);
 				nodes[i] = new DownloadNode(
 					item.getInt("SetID"), formatDate(item.getString("LastUpdate")),
 					item.getString("Title"), null, item.getString("Artist"), null,
@@ -109,8 +113,11 @@ public class RippleServer extends DownloadServer {
 			this.totalResults = resultCount;
 		} catch (MalformedURLException | UnsupportedEncodingException e) {
 			ErrorHandler.error(String.format("Problem loading result list for query '%s'.", query), e, true);
+			UI.getNotificationManager().sendBarNotification(e.toString());
 		} catch (JSONException e) {
 			Log.error(e);
+			DeviceInfo.info.reportError(e);
+//			UI.getNotificationManager().sendNotification(e.getMessage()+"\nError Here");
 		} finally {
 			Utils.setSSLCertValidation(true);
 		}

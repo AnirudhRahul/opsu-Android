@@ -50,6 +50,8 @@ public class UserButton {
 	/** Background alpha level. */
 	private AnimatedValue bgAlpha = new AnimatedValue(200, 0f, 1f, AnimationEquation.OUT_QUAD);
 
+	String function;
+
 	/** Bar colors. */
 	private Color
 		barBgColor = new Color(Color.darkGray),
@@ -64,6 +66,7 @@ public class UserButton {
 
 	/** The user. */
 	private User user;
+
 
 	/**
 	 * Initializes the user buttons.
@@ -170,12 +173,12 @@ public class UserButton {
 		g.fillRoundRect(cx, cy, buttonWidth - padding * 2, buttonHeight - padding * 2, 4);
 
 		// no user?
-		if (user == null) {
-			String text = "Add User";
+		if (function != null) {
+
 			Fonts.LARGE.drawString(
-				x + (buttonWidth - Fonts.LARGE.getWidth(text)) / 2,
+				x + (buttonWidth - Fonts.LARGE.getWidth(function)) / 2,
 				y + (buttonHeight - Fonts.LARGE.getLineHeight()) / 2,
-				text, Colors.WHITE_FADE
+				function, Colors.WHITE_FADE
 			);
 			Colors.WHITE_FADE.a = oldWhiteAlpha;
 			return;

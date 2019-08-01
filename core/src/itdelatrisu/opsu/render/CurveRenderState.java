@@ -17,22 +17,27 @@
  */
 package itdelatrisu.opsu.render;
 
-import fluddokt.opsu.fake.*;
-import fluddokt.opsu.fake.gl.*;
-
-import itdelatrisu.opsu.GameImage;
-import itdelatrisu.opsu.Utils;
-import itdelatrisu.opsu.beatmap.HitObject;
-import itdelatrisu.opsu.objects.curves.Vec2f;
-
-import java.nio.FloatBuffer;
-
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Gdx2DPixmap;
 import com.badlogic.gdx.graphics.glutils.PixmapTextureData;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+
+import java.nio.FloatBuffer;
+
+import fluddokt.opsu.fake.BufferUtils;
+import fluddokt.opsu.fake.Color;
+import fluddokt.opsu.fake.Graphics;
+import fluddokt.opsu.fake.Image;
+import fluddokt.opsu.fake.gl.GL11;
+import fluddokt.opsu.fake.gl.GL14;
+import fluddokt.opsu.fake.gl.GL15;
+import fluddokt.opsu.fake.gl.GL20;
+import itdelatrisu.opsu.GameImage;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.beatmap.HitObject;
+import itdelatrisu.opsu.objects.curves.Vec2f;
 
 /*
 import org.lwjgl.BufferUtils;
