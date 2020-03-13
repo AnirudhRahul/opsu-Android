@@ -235,7 +235,7 @@ public class DynamoDB {
     }
 
     //***Load pagination asynchronously
-    public QueryResultPage<BeatmapDynamoDB> beatmapQuery(DynamoDBQueryExpression query){
+    private QueryResultPage<BeatmapDynamoDB> beatmapQuery(DynamoDBQueryExpression query){
         try {
         AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(retrieveCredentials());
         DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
@@ -243,7 +243,7 @@ public class DynamoDB {
         return resultPage;
         }catch (Exception e){
 //            UI.getNotificationManager().sendNotification(e.getMessage());
-            ErrorHandler.error("db retrieval error",e,true);
+            ErrorHandler.error("db retrieval error",e,false);
         }
 
         return null;

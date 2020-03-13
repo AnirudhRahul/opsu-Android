@@ -96,6 +96,9 @@ public class RippleServer extends DownloadServer {
 //			}
 //			json.length();
 			// parse result list
+			if(json == null)
+				return nodes;
+
 			nodes = new DownloadNode[json.length()];
 			for (int i = 0; i < nodes.length; i++) {
 				JSONObject item = json.getJSONObject(i);

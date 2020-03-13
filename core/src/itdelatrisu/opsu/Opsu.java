@@ -18,9 +18,9 @@
 
 package itdelatrisu.opsu;
 
-import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
+import fluddokt.ex.DeviceInfo;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.FadeInTransition;
 import fluddokt.opsu.fake.DefaultLogSystem;
@@ -125,8 +125,9 @@ public class Opsu extends StateBasedGame {
 			DefaultLogSystem.out = new PrintStream(new FileOutputStream(Options.LOG_FILE, false));
 			DefaultLogSystem.out.println("Run Date: "+ new java.util.Date());
 			DefaultLogSystem.out.flush();
-		} catch (FileNotFoundException e) {
-			Log.error(e);
+		} catch (Exception e) {
+			DeviceInfo.info.reportError(e);
+
 		}
 
 		/*

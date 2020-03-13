@@ -17,16 +17,8 @@
  */
 
 package itdelatrisu.opsu.db;
-import fluddokt.opsu.fake.*;
-import itdelatrisu.opsu.Utils;
+
 import java.io.IOException;
-
-import itdelatrisu.opsu.ErrorHandler;
-import itdelatrisu.opsu.beatmap.Beatmap;
-import itdelatrisu.opsu.beatmap.BeatmapParser;
-import itdelatrisu.opsu.options.Options;
-
-//import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,6 +28,16 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import fluddokt.opsu.fake.File;
+import fluddokt.opsu.fake.Log;
+import itdelatrisu.opsu.ErrorHandler;
+import itdelatrisu.opsu.Utils;
+import itdelatrisu.opsu.beatmap.Beatmap;
+import itdelatrisu.opsu.beatmap.BeatmapParser;
+import itdelatrisu.opsu.options.Options;
+
+//import java.io.File;
 
 /*
 import org.newdawn.slick.util.Log;

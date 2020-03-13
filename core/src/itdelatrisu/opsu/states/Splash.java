@@ -178,6 +178,7 @@ public class Splash extends BasicGameState {
 
 						// import replays
 						ReplayImporter.importAllReplaysFromDir(importDir);
+						ReplayImporter.importAllReplaysFromDir(Options.getReplayDir());
 
 						// load sounds
 						SoundController.init();

@@ -502,8 +502,8 @@ public class SongMenu extends BasicGameState {
 
 				SongMenu.this.setFocus(focusNode, 0, false, true);
 
-//				focusScores = getScoreDataForNode(focusNode, true);
-//				startScorePos.setPosition(0);
+				focusScores = getScoreDataForNode(focusNode, true);
+				startScorePos.setPosition(0);
 			}
 
 
@@ -718,7 +718,7 @@ public class SongMenu extends BasicGameState {
 		}
 		g.clearClip();
 		checkFutures();
-		focusScores = getScoreDataForNode(focusNode, false);
+//		focusScores = getScoreDataForNode(focusNode, false);
 		// score buttons
 		if (focusScores != null) {
 			ScoreData.clipToArea(g);
@@ -1930,7 +1930,7 @@ public class SongMenu extends BasicGameState {
 //		}
 //		else
 //			scoreMap = ScoreDB.getMapSetScores(current);
-
+		UI.getNotificationManager().sendNotification(current.md5Hash+"");
 		if(currentMode!=null)
 			scoreMap = currentMode.getCache();
 		else
