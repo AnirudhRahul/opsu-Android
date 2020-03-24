@@ -72,14 +72,11 @@ public class Splash extends BasicGameState {
 	/** Loading thread. */
 	private Thread thread;
 
-	/** Number of times the 'Esc' key has been pressed. */
-	private int escapeCount = 0;
-
 	/** Whether the skin being loaded is a new skin (for program restarts). */
 	private boolean newSkin = false;
 
 	/** Whether the watch service is newly enabled (for program restarts). */
-	private boolean watchServiceChange = false;
+	private boolean watchServiceChange = true;
 
 	/** Logo alpha level. */
 	private AnimatedValue logoAlpha = new AnimatedValue(MIN_SPLASH_TIME, 0f, 1f, AnimationEquation.LINEAR);
@@ -92,7 +89,7 @@ public class Splash extends BasicGameState {
 
 	// game-related variables
 	private final int state;
-	private GameContainer container;
+//	private GameContainer container;
 	private boolean init = false;
 
 	public Splash(int state) {
@@ -102,14 +99,12 @@ public class Splash extends BasicGameState {
 	@Override
 	public void init(GameContainer container, StateBasedGame game)
 			throws SlickException {
-		this.container = container;
+//		this.container = container;
 
 		// check if skin changed
 		if (Options.getSkin() != null)
 			this.newSkin = (Options.getSkin().getDirectory() != Options.getSkinDir());
 
-		// check if watch service newly enabled
-		this.watchServiceChange = Options.isWatchServiceEnabled() && BeatmapWatchService.get() == null;
 
 		// load Utils class first (needed in other 'init' methods)
 		Utils.init(container, game);
@@ -123,15 +118,14 @@ public class Splash extends BasicGameState {
 			throws SlickException {
 		g.setBackground(Color.black);
 		GameImage.MENU_LOGO.getImage().drawCentered(container.getWidth() / 2, container.getHeight() / 2);
-		UI.drawLoadingProgress(g, Options.isLoadVerbose() ? 1f : progressAlpha.getValue());
+		UI.drawLoadingProgress(g, progressAlpha.getValue());
 	}
 
 	@Override
 	public void update(GameContainer container, StateBasedGame game, int delta)
 			throws SlickException {
-		if (!init) {
+		if (!init && !DeviceInfo.info.getHardReset()) {
 			init = true;
-
 			// resources already loaded (from application restart)
 			if (BeatmapSetList.get() != null) {
 				if (newSkin || watchServiceChange) {  // need to reload resources
@@ -141,7 +135,6 @@ public class Splash extends BasicGameState {
 							// reload beatmaps if watch service newly enabled
 							if (watchServiceChange)
 								BeatmapParser.parseAllFiles(Options.getBeatmapDir());
-
 							// reload sounds if skin changed
 							// TODO: only reload each sound if actually needed?
 							if (newSkin)
@@ -187,6 +180,7 @@ public class Splash extends BasicGameState {
 
 						finished = true;
 						thread = null;
+						DeviceInfo.info.setHardReset(false);
 					}
 				};
 				thread.start();
@@ -225,23 +219,31 @@ public class Splash extends BasicGameState {
 	public int getID() { return state; }
 
 	@Override
-	public void keyPressed(int key, char c) {
-		if (key == Input.KEY_ESCAPE) {
-			// close program
-			if (++escapeCount >= 3)
-				container.exit();
-
-			// stop parsing beatmaps by sending interrupt to BeatmapParser
-			else if (thread != null)
-				thread.interrupt();
-		}
-	}
-
-	int clickCnt = 0;
-	@Override
-	public void mouseClicked(int button, int x, int y, int clickCount) {
-		clickCnt++;
-		if (thread!=null && clickCnt > 10)
+	public void leave(GameContainer container, StateBasedGame game)
+			throws SlickException {
+		if (thread != null)
 			thread.interrupt();
 	}
+
+//	@Override
+//	public void keyPressed(int key, char c) {
+//		if (key == Input.KEY_ESCAPE) {
+//			// close program
+//			if (++escapeCount >= 3)
+//				container.exit();
+//
+//			// stop parsing beatmaps by sending interrupt to BeatmapParser
+//			else if (thread != null)
+//				thread.interrupt();
+//		}
+//	}
+
+//	int clickCnt = 0;
+//	@Override
+//	public void mouseClicked(int button, int x, int y, int clickCount) {
+//		clickCnt++;
+//		if (thread!=null && clickCnt > 10)
+//			thread.interrupt();
+//	}
+
 }

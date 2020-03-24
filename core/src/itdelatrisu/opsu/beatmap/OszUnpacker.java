@@ -45,6 +45,7 @@ public class OszUnpacker {
 	// This class should not be instantiated.
 	private OszUnpacker() {}
 
+	private static final String fileEnding=".osz";
 	/**
 	 * Invokes the unpacker for each OSZ archive in a root directory.
 	 * @param root the root directory
@@ -58,7 +59,15 @@ public class OszUnpacker {
 		files = root.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(java.io.File dir, String name) {
-				return name.toLowerCase().endsWith(".osz");
+//				return name.toLowerCase().endsWith(".osz");
+				if(name.length()<fileEnding.length())
+					return false;
+				else
+				for(int i=1;i<=fileEnding.length();i++){
+					if(Character.toLowerCase(name.charAt(name.length()-i))!=fileEnding.charAt(fileEnding.length()-i))
+						return false;
+				}
+				return true;
 			}
 		});
 		if (files == null || files.length < 1) {
@@ -67,7 +76,7 @@ public class OszUnpacker {
 		}
 
 		// unpack OSZs
-		BeatmapWatchService ws = (Options.isWatchServiceEnabled()) ? BeatmapWatchService.get() : null;
+		BeatmapWatchService ws = BeatmapWatchService.get();
 		if (ws != null)
 			ws.pause();
 		for (File file : files) {

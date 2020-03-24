@@ -47,7 +47,7 @@ public class UserList {
 
 
 	/** The single class instance. */
-	private static UserList list;
+	private static UserList list = new UserList();
 
 	/** Map of all users. */
 	private Map<String, User> users = new HashMap<String, User>();
@@ -56,7 +56,7 @@ public class UserList {
 	private User currentUser;
 
 	/** Creates a new instance of this class (overwriting any previous instance). */
-	public static void create() { list = new UserList(); }
+//	public static void create() { list = new UserList(); }
 
 	/** Returns the single instance of this class. */
 	public static UserList get() { return list; }

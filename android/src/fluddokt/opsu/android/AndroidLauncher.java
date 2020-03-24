@@ -139,9 +139,22 @@ public class AndroidLauncher extends AndroidApplication implements SurfaceHolder
 			public void setShownNotification(String name,boolean val){
 				prefs.edit().putBoolean(name,val).apply();
 			}
+
+			@Override
+			public boolean getHardReset(){
+				return prefs.getBoolean("HardReset",false);
+			}
+			@Override
+			public void setHardReset(boolean val){
+				if(val)
+					prefs.edit().putBoolean("HardReset",val).commit();
+				else
+					prefs.edit().putBoolean("HardReset",val).apply();
+
+			}
+
 			@Override
 			public void reportError(Throwable e){
-//                Toast.makeText(getApplicationContext(), "Bruh",Toast.LENGTH_LONG).show();
 				Log.e("Crashlytics Reporting","Error Reported");
 				Crashlytics.getInstance().core.logException(e);
 			}

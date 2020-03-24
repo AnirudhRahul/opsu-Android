@@ -125,6 +125,9 @@ public class MainMenu extends BasicGameState {
 	/** Button linking to repository. */
 	private MenuButton repoButton;
 
+	/** Button that hard resets the game */
+	private MenuButton resetButton;
+
 	/** Buttons for installing updates. */
 	private MenuButton updateButton, restartButton;
 
@@ -261,6 +264,7 @@ public class MainMenu extends BasicGameState {
 		downloadsButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
 		downloadsButton.setHoverExpand(1.03f, Expand.LEFT);
 
+		// initialize profiles button
 		Image profileImg = GameImage.PROFILE.getImage();
 		profileButton = new MenuButton(profileImg, width*0.016f, height / 2f);
 		profileButton.setHoverAnimationDuration(350);
@@ -269,18 +273,17 @@ public class MainMenu extends BasicGameState {
 
 
 		// initialize repository button
-		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {  // only if a webpage can be opened
-			Image repoImg = GameImage.REPOSITORY.getImage();
-			int repoMargin = (int) (height * 0.01f);
-			float repoScale = 1.25f;
-			repoButton = new MenuButton(repoImg,
-				repoMargin + repoImg.getWidth() * repoScale / 2,
-				height - repoMargin - repoImg.getHeight() * repoScale / 2
-			);
-			repoButton.setHoverAnimationDuration(350);
-			repoButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
-			repoButton.setHoverExpand(repoScale);
-		}
+		Image repoImg = GameImage.REPOSITORY.getImage();
+		int repoMargin = (int) (height * 0.01f);
+		float repoScale = 1.25f;
+		repoButton = new MenuButton(repoImg,
+			repoMargin + repoImg.getWidth() * repoScale / 2,
+			height - repoMargin - repoImg.getHeight() * repoScale / 2
+		);
+		repoButton.setHoverAnimationDuration(350);
+		repoButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
+		repoButton.setHoverExpand(repoScale);
+
 
 		// initialize update buttons
 		float updateX = width / 2f, updateY = height * 17 / 18f;

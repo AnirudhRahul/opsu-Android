@@ -57,6 +57,7 @@ public class ReplayImporter {
 	// This class should not be instantiated.
 	private ReplayImporter() {}
 
+	private static final String fileEnding=".osr";
 	/**
 	 * Invokes the importer for each OSR file in a directory, adding the replay
 	 * to the score database and moving the file into the replay directory.
@@ -67,7 +68,15 @@ public class ReplayImporter {
 		files = dir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(java.io.File dir, String name) {
-				return name.toLowerCase().endsWith(".osr");
+//				return name.toLowerCase().endsWith(".osr");
+				if(name.length()<fileEnding.length())
+					return false;
+				else
+					for(int i=1;i<=fileEnding.length();i++){
+						if(Character.toLowerCase(name.charAt(name.length()-i))!=fileEnding.charAt(fileEnding.length()-i))
+							return false;
+					}
+				return true;
 			}
 		});
 		if (files == null || files.length < 1) {
@@ -123,7 +132,7 @@ public class ReplayImporter {
 		files = null;
 
 		if (importCount > 0) {
-			String text = String.format("Imported %d replay%s.", importCount, importCount == 1 ? "" : "s");
+			String text = String.format(Locale.US, "Imported %d replay%s.", importCount, importCount == 1 ? "" : "s");
 			UI.getNotificationManager().sendNotification(text);
 		}
 	}

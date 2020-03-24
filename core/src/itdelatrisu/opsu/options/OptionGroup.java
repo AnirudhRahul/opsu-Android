@@ -124,10 +124,6 @@ public class OptionGroup {
 			GameOption.CHECKPOINT,
 			GameOption.REPLAY_SEEKING,
 		}),
-		new OptionGroup("MISCELLANEOUS", new GameOption[] {
-			//GameOption.ENABLE_WATCH_SERVICE,
-			GameOption.LOAD_VERBOSE,
-		}),
 		new OptionGroup("Extras", new GameOption[] {
 			GameOption.MOBILE_UI_SCALING,
 			GameOption.IN_GAME_PAUSE,

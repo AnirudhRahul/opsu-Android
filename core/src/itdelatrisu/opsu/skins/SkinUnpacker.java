@@ -41,6 +41,7 @@ public class SkinUnpacker {
 	// This class should not be instantiated.
 	private SkinUnpacker() {}
 
+	private static final String fileEnding=".osk";
 	/**
 	 * Invokes the unpacker for each OSK archive in a root directory.
 	 * @param root the root directory
@@ -53,7 +54,15 @@ public class SkinUnpacker {
 		files = root.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(java.io.File dir, String name) {
-				return name.toLowerCase().endsWith(".osk");
+//				return name.toLowerCase().endsWith(".osk");
+				if(name.length()<fileEnding.length())
+					return false;
+				else
+					for(int i=1;i<=fileEnding.length();i++){
+						if(Character.toLowerCase(name.charAt(name.length()-i))!=fileEnding.charAt(fileEnding.length()-i))
+							return false;
+					}
+				return true;
 			}
 		});
 		if (files == null || files.length < 1) {

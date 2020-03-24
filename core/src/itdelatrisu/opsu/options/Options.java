@@ -530,7 +530,6 @@ public class Options {
 			}
 		},
 		DYNAMIC_BACKGROUND ("Dynamic backgrounds", "DynamicBackground", "The current beatmap background will be used as the main menu background.", true),
-		LOAD_VERBOSE ("Detailed loading progress", "LoadVerbose", "Display more verbose loading progress in the splash screen.", false),
 		MASTER_VOLUME ("Master", "VolumeUniversal", "Global volume level.", 35, 0, 100) {
 			@Override
 			public void setValue(int value) {
@@ -690,10 +689,7 @@ public class Options {
 		ENABLE_THEME_SONG ("Theme song", "MenuMusic", OpsuConstants.PROJECT_NAME + " will play themed music throughout the game, instead of using random beatmaps.", true),
 		REPLAY_SEEKING ("Replay seeking", "ReplaySeeking", "Enable a seeking bar on the left side of the screen during replays.", true),
 		DISABLE_UPDATER ("Disable automatic updates", "DisableUpdater", "Disable checking for updates when the game starts.", false),
-		ENABLE_WATCH_SERVICE ("Watch service", "WatchService", "Watch the beatmap directory for changes. Requires a restart.", false) {
-			@Override
-			public boolean isRestartRequired() { return true; }
-		},
+
 		/*
 		};
 		*/
@@ -1308,12 +1304,6 @@ public class Options {
 	public static float getFixedSpeed() { return GameOption.FIXED_SPEED.getIntegerValue() / 100f; }
 
 	/**
-	 * Returns whether or not to render loading text in the splash screen.
-	 * @return true if enabled
-	 */
-	public static boolean isLoadVerbose() { return GameOption.LOAD_VERBOSE.getBooleanValue(); }
-
-	/**
 	 * Returns the track checkpoint time.
 	 * @return the checkpoint time (in ms)
 	 */
@@ -1354,12 +1344,6 @@ public class Options {
 	 * @return true if disabled
 	 */
 	public static boolean isUpdaterDisabled() { return GameOption.DISABLE_UPDATER.getBooleanValue(); }
-
-	/**
-	 * Returns whether or not the beatmap watch service is enabled.
-	 * @return true if enabled
-	 */
-	public static boolean isWatchServiceEnabled() { return GameOption.ENABLE_WATCH_SERVICE.getBooleanValue(); }
 
 	/**
 	 * Sets the track checkpoint time, if within bounds.
@@ -1501,6 +1485,7 @@ public class Options {
 		beatmapDir = BEATMAP_DIR;
 		if (!beatmapDir.isDirectory() && !beatmapDir.mkdir())
 			ErrorHandler.error(String.format("Failed to create beatmap directory at '%s'.", beatmapDir.getAbsolutePath()), null, false);
+
 		return beatmapDir;
 	}
 

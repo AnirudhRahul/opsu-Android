@@ -10,6 +10,9 @@ public class DeviceInfo {
 		return null;
 	}
 	public boolean shownNotification(String name){return false;}
+	public boolean getHardReset(){return false;}
+	public void setHardReset(boolean val){}
+
 	public void setShownNotification(String name,boolean val){}
 	public boolean isMusicPlaying(){return false;}
 	public boolean isSynced(){return false;}

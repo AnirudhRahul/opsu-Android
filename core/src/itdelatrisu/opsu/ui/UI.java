@@ -18,6 +18,8 @@
 
 package itdelatrisu.opsu.ui;
 
+import java.util.Locale;
+
 import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.GameContainer;
 import fluddokt.opsu.fake.Graphics;
@@ -100,7 +102,7 @@ public class UI {
 
 		// cursor
 		Cursor.init(container, game);
-		cursor.hide();
+//		cursor.hide();
 
 		// back button
 		backButton = new BackButton(container);
@@ -312,22 +314,13 @@ public class UI {
 		int lineOffsetY = Fonts.MEDIUM.getLineHeight();
 		float oldWhiteAlpha = Colors.WHITE_FADE.a;
 		Colors.WHITE_FADE.a = alpha;
-		if (Options.isLoadVerbose()) {
-			// verbose: display percentages and file names
-			Fonts.MEDIUM.drawString(
-				marginX, lineY - (lineOffsetY * 2),
-				String.format("%s (%d%%)", text, progress), Colors.WHITE_FADE
-			);
-			Fonts.MEDIUM.drawString(marginX, lineY - lineOffsetY, file, Colors.WHITE_FADE);
-		} else {
-			// draw loading bar
-			Fonts.MEDIUM.drawString(marginX, lineY - (lineOffsetY * 2), text, Colors.WHITE_FADE);
-			g.setColor(Colors.WHITE_FADE);
-			g.fillRoundRect(
-				marginX, lineY - (lineOffsetY / 2f),
-				(container.getWidth() - (marginX * 2f)) * progress / 100f, lineOffsetY / 4f, 4
-			);
-		}
+
+		Fonts.MEDIUM.drawString(
+			marginX, lineY - (lineOffsetY * 2),
+			String.format(Locale.US,"%s (%d%%)", text, progress), Colors.WHITE_FADE
+		);
+		Fonts.MEDIUM.drawString(marginX, lineY - lineOffsetY, file, Colors.WHITE_FADE);
+
 		Colors.WHITE_FADE.a = oldWhiteAlpha;
 	}
 

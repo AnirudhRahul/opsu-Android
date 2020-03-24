@@ -192,9 +192,9 @@ public class Container extends AppGameContainer {
 		CurveRenderState.shutdown();
 		LegacyCurveRenderState.shutdown();
 
-		// destroy watch service
-		if (!Options.isWatchServiceEnabled())
-			BeatmapWatchService.destroy();
+//		// destroy watch service
+//		if (!Options.isWatchServiceEnabled())
+//			BeatmapWatchService.destroy();
 		BeatmapWatchService.removeListeners();
 
 		// delete temporary directory

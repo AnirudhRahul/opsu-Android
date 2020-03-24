@@ -105,8 +105,7 @@ public class BeatmapParser {
 		BeatmapSetList.create();
 
 		// create a new watch service
-		if (Options.isWatchServiceEnabled())
-			BeatmapWatchService.create();
+		BeatmapWatchService.create();
 
 		// parse all directories
 		parseDirectories(root.listFiles(), oldBeatmapList);
@@ -148,7 +147,7 @@ public class BeatmapParser {
 		List<Beatmap> parsedBeatmaps = new LinkedList<Beatmap>();  // loaded from parser
 
 		// watch service
-		BeatmapWatchService ws = (Options.isWatchServiceEnabled()) ? BeatmapWatchService.get() : null;
+		BeatmapWatchService ws = BeatmapWatchService.get();
 
 		// parse directories
 		BeatmapSetNode lastNode = null;
@@ -285,6 +284,7 @@ public class BeatmapParser {
 		try (
 			InputStream bis = new BufferedInputStream(new FileInputStream(file));
 			MD5InputStreamWrapper md5stream = (!hasNoMD5Algorithm) ? new MD5InputStreamWrapper(bis) : null;
+			//TODO Move up min API version
 			BufferedReader in = new BufferedReader(new InputStreamReader((md5stream != null) ? md5stream : bis, "UTF-8"));
 		) {
 			String line = in.readLine();
@@ -726,7 +726,11 @@ public class BeatmapParser {
 					break;
 
 				// lines must have at minimum 5 parameters
-				int tokenCount = line.length() - line.replace(",", "").length();
+				int tokenCount = 0;
+				for(int i=0;i<line.length();i++)
+					if(line.charAt(i)!=',')
+						tokenCount++;
+
 				if (tokenCount < 4)
 					continue;
 

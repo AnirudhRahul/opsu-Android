@@ -114,9 +114,9 @@ idea {
     }
 }
 dependencies {
-    compile 'com.google.android.gms:play-services-ads:18.1.1'
-    compile 'com.google.firebase:firebase-core:17.0.1'
-    compile 'com.crashlytics.sdk.android:crashlytics:2.10.1'
+    implementation 'com.google.android.gms:play-services-ads:18.1.1'
+    implementation 'com.google.firebase:firebase-core:17.0.1'
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
 }
 
 apply plugin: 'io.fabric'

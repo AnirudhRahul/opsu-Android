@@ -211,7 +211,7 @@ public class BeatmapSetList {
 		BeatmapDB.delete(dir.getName());
 
 		// delete the associated directory
-		BeatmapWatchService ws = (Options.isWatchServiceEnabled()) ? BeatmapWatchService.get() : null;
+		BeatmapWatchService ws = BeatmapWatchService.get();
 		if (ws != null)
 			ws.pause();
 		try {
@@ -266,7 +266,7 @@ public class BeatmapSetList {
 		BeatmapDB.delete(file.getParentFile().getName(), file.getName());
 
 		// delete the associated file
-		BeatmapWatchService ws = (Options.isWatchServiceEnabled()) ? BeatmapWatchService.get() : null;
+		BeatmapWatchService ws = BeatmapWatchService.get();
 		if (ws != null)
 			ws.pause();
 		try {

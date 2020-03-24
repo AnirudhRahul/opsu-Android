@@ -187,8 +187,7 @@ public class Utils {
 		// initialize UI components
 		UI.init(container, game);
 
-		// build user list
-		UserList.create();
+
 
 		// initialize user button
 		UserButton.init(width, height);
@@ -463,8 +462,8 @@ public class Utils {
 			zipFile.extractAll(dest.getAbsolutePath());
 			return true;
 		} catch (ZipException e) {
-			//ErrorHandler.error(String.format("Failed to unzip file %s to dest %s.",
-			//		file.getAbsolutePath(), dest.getAbsolutePath()), e, false);
+			ErrorHandler.error(String.format("Failed to unzip file %s to dest %s.",
+					file.getAbsolutePath(), dest.getAbsolutePath()), e, false);
 		}
 		return false;
 	}
