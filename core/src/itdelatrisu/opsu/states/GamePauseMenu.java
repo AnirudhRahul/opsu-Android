@@ -117,15 +117,13 @@ public class GamePauseMenu extends BasicGameState {
 		retryButton.draw();
 		backButton.draw();
 
-
-		if(useVideo) {
-			int mouseX = input.getMouseX(), mouseY = input.getMouseY();
-			g.setColor((musicPositionBarContains(mouseX, mouseY)) ? MUSICBAR_HOVER : MUSICBAR_NORMAL);
-			g.fillRoundRect(musicBarX, musicBarY, musicBarWidth, musicBarHeight, 4);
-			g.setColor(MUSICBAR_FILL);
-			float musicBarPosition = (float) Options.GameOption.VIDEO_BRIGHTNESS.getIntegerValue() / 255f;
-			g.fillRoundRect(musicBarX, musicBarY + musicBarHeight * (1 - musicBarPosition), musicBarWidth, musicBarHeight * musicBarPosition, 4);
-		}
+		int mouseX = input.getMouseX(), mouseY = input.getMouseY();
+		g.setColor((musicPositionBarContains(mouseX, mouseY)) ? MUSICBAR_HOVER : MUSICBAR_NORMAL);
+		g.fillRoundRect(musicBarX, musicBarY, musicBarWidth, musicBarHeight, 4);
+		g.setColor(MUSICBAR_FILL);
+		float musicBarPosition = useVideo? 	Options.GameOption.VIDEO_BRIGHTNESS.getIntegerValue()/255f:
+											Options.GameOption.BACKGROUND_DIM.getIntegerValue()/100f;
+		g.fillRoundRect(musicBarX, musicBarY + musicBarHeight * (1 - musicBarPosition), musicBarWidth, musicBarHeight * musicBarPosition, 4);
 
 		UI.draw(g);
 	}
@@ -209,6 +207,7 @@ public class GamePauseMenu extends BasicGameState {
 			game.enterState(Opsu.STATE_GAME);
 		} else if (retryButton.contains(x, y)) {
 			SoundController.playSound(SoundEffect.MENUHIT);
+			if(useVideo)
 			VideoLoader.loader.seek(0);
 			gameState.setPlayState(Game.PlayState.RETRY);
 			game.enterState(Opsu.STATE_GAME);
@@ -228,18 +227,28 @@ public class GamePauseMenu extends BasicGameState {
 			if(useVideo)
 				VideoLoader.loader.setupVideo(MusicController.getBeatmap().video.getAbsolutePath());
 			game.enterState(Opsu.STATE_SONGMENU, new EasedFadeOutTransition(), new FadeInTransition());
-		} else if(useVideo&&musicPositionBarContains(x,y)){
-			float pos = (musicBarHeight - y + musicBarY) / musicBarHeight * 255f;
-			Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(pos));
+		} else if(musicPositionBarContains(x,y)){
+			float pos = (musicBarHeight - y + musicBarY) / musicBarHeight;
+			if(useVideo) {
+				Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(255f*pos));
+			}
+			else{
+				Options.GameOption.BACKGROUND_DIM.setValue(Math.round(100f*pos));
+			}
 			adjusting=true;
 
 		}
 	}
 	@Override
 	public void mouseDragged(int oldx, int oldy, int newx, int newy){
-		if(useVideo&&(musicPositionBarContains(oldx,oldy)||adjusting)){
+		if(musicPositionBarContains(oldx,oldy)||adjusting){
 			float pos = (musicBarHeight - newy + musicBarY) / musicBarHeight * 255f;
-			Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(pos));
+			if(useVideo) {
+				Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(255f*pos));
+			}
+			else{
+				Options.GameOption.BACKGROUND_DIM.setValue(Math.round(100f*pos));
+			}
 			UI.getNotificationManager().sendBarNotification("Adjusting Brightness");
 		}
 		else {
@@ -267,8 +276,8 @@ public class GamePauseMenu extends BasicGameState {
 		continueButton.resetHover();
 		retryButton.resetHover();
 		backButton.resetHover();
-		if(!DeviceInfo.info.shownNotification("brightSlider")&&useVideo){
-			UI.getNotificationManager().sendNotification("Hey did you know you can change the background video brightness with the slider on the left?");
+		if(!DeviceInfo.info.shownNotification("brightSlider")){
+			UI.getNotificationManager().sendNotification("Hey did you know you can change the background brightness with the slider on the left?");
 			DeviceInfo.info.setShownNotification("brightSlider",true);
 		}
 

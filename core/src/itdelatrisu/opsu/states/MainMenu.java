@@ -120,7 +120,7 @@ public class MainMenu extends BasicGameState {
 	private MenuButton downloadsButton;
 
 	/** Button linking to Profile State. */
-	private MenuButton profileButton;
+//	private MenuButton profileButton;
 
 	/** Button linking to repository. */
 	private MenuButton repoButton;
@@ -265,11 +265,11 @@ public class MainMenu extends BasicGameState {
 		downloadsButton.setHoverExpand(1.03f, Expand.LEFT);
 
 		// initialize profiles button
-		Image profileImg = GameImage.PROFILE.getImage();
-		profileButton = new MenuButton(profileImg, width*0.016f, height / 2f);
-		profileButton.setHoverAnimationDuration(350);
-		profileButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
-		profileButton.setHoverExpand(1.03f, Expand.RIGHT);
+//		Image profileImg = GameImage.PROFILE.getImage();
+//		profileButton = new MenuButton(profileImg, width*0.016f, height / 2f);
+//		profileButton.setHoverAnimationDuration(350);
+//		profileButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
+//		profileButton.setHoverExpand(1.03f, Expand.RIGHT);
 
 
 		// initialize repository button
@@ -283,6 +283,13 @@ public class MainMenu extends BasicGameState {
 		repoButton.setHoverAnimationDuration(350);
 		repoButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
 		repoButton.setHoverExpand(repoScale);
+
+		Image resetImg = GameImage.MENU_RELOAD.getImage();
+		float resetScale = 1f;
+		resetButton = new MenuButton(resetImg,
+				repoButton.getX()+repoMargin+ resetImg.getWidth() * resetScale / 2,
+				height - repoMargin - resetImg.getHeight() * resetScale / 2
+		);
 
 
 		// initialize update buttons
@@ -382,7 +389,7 @@ public class MainMenu extends BasicGameState {
 		downloadsButton.draw();
 
 		//draw profile button
-		profileButton.draw();
+//		profileButton.draw();
 
 		// draw logo (pulsing)
 		Float position = MusicController.getBeatProgress();
@@ -449,8 +456,7 @@ public class MainMenu extends BasicGameState {
 		}
 
 		// draw repository button
-		if (repoButton != null)
-			repoButton.draw();
+		repoButton.draw();
 
 		// draw update button
 		if (Updater.get().showButton()) {
@@ -521,14 +527,13 @@ public class MainMenu extends BasicGameState {
 		else
 			logo.hoverUpdate(delta, mouseX, mouseY, 0.25f);
 
-		if (repoButton != null)
-			repoButton.hoverUpdate(delta, mouseX, mouseY);
+		repoButton.hoverUpdate(delta, mouseX, mouseY);
 		if (Updater.get().showButton()) {
 			updateButton.autoHoverUpdate(delta, true);
 			restartButton.autoHoverUpdate(delta, false);
 		}
 		downloadsButton.hoverUpdate(delta, mouseX, mouseY);
-		profileButton.hoverUpdate(delta, mouseX, mouseY);
+//		profileButton.hoverUpdate(delta, mouseX, mouseY);
 		// ensure only one button is in hover state at once
 		boolean noHoverUpdate = musicPositionBarContains(mouseX, mouseY);
 		boolean contains = musicPlay.contains(mouseX, mouseY);
@@ -634,7 +639,7 @@ public class MainMenu extends BasicGameState {
 			UI.updateTooltip(delta, "Next track", false);
 		else if (musicPrevious.contains(mouseX, mouseY))
 			UI.updateTooltip(delta, "Previous track", false);
-		else if (repoButton != null && repoButton.contains(mouseX, mouseY)) {
+		else if (repoButton.contains(mouseX, mouseY)) {
 			String version = Updater.get().getCurrentVersion();
 			String tooltip = String.format(Locale.US,
 				"running %s %s\ncreated by %s",
@@ -740,8 +745,8 @@ public class MainMenu extends BasicGameState {
 		restartButton.resetHover();
 		if (!downloadsButton.contains(mouseX, mouseY))
 			downloadsButton.resetHover();
-		if(!profileButton.contains(mouseX, mouseY))
-			profileButton.resetHover();
+//		if(!profileButton.contains(mouseX, mouseY))
+//			profileButton.resetHover();
 		if (!userButton.contains(mouseX, mouseY))
 			userButton.resetHover();
 
@@ -817,7 +822,7 @@ public class MainMenu extends BasicGameState {
 		}
 
 		// profile button actions
-		if (profileButton.contains(x, y)) {
+//		if (profileButton.contains(x, y)) {
 //			if(UserList.get().getCurrentUser().getBadges()!=null && !Options.GameOption.USE_WIFI.getBooleanValue()) {
 //				UI.getNotificationManager().sendNotification("Please restart while connected to the internet to access your profile");
 //				UI.getNotificationManager().sendNotification(!Options.GameOption.USE_WIFI.getBooleanValue()+"");
@@ -825,12 +830,12 @@ public class MainMenu extends BasicGameState {
 //			}
 //			SoundController.playSound(SoundEffect.MENUHIT);
 //			game.enterState(Opsu.STATE_PROFILEMENU, new EasedFadeOutTransition(), new FadeInTransition());
-			UI.getNotificationManager().sendNotification("Coming soon");
+//			UI.getNotificationManager().sendNotification("Coming soon");
 //			return;
-		}
+//		}
 
 		// repository button actions
-		if (repoButton != null && repoButton.contains(x, y)) {
+		if (repoButton.contains(x, y)) {
 			SoundController.playSound(SoundEffect.MENUHIT);
 			((ButtonMenu) game.getState(Opsu.STATE_BUTTONMENU)).setMenuState(MenuState.ABOUT);
 			game.enterState(Opsu.STATE_BUTTONMENU);
@@ -1003,7 +1008,7 @@ public class MainMenu extends BasicGameState {
 		updateButton.resetHover();
 		restartButton.resetHover();
 		downloadsButton.resetHover();
-		profileButton.resetHover();
+//		profileButton.resetHover();
 		userButton.resetHover();
 	}
 
