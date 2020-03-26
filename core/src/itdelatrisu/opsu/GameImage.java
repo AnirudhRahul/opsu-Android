@@ -317,11 +317,10 @@ public enum GameImage {
 			return img.getScaledCopy(r, r);
 		}
 	},
-	MENU_RELOAD ("reload", "png", false, false) {
+	MENU_RELOAD ("refresh-arrow", "png", false, false) {
 		@Override
 		protected Image process_sub(Image img, int w, int h) {
-			int r = (int) ((Fonts.LARGE.getLineHeight() + Fonts.DEFAULT.getLineHeight() - 8) / getUIscale());
-			return img.getScaledCopy(r / 48f);
+			return img.getScaledCopy(1f/getUIscale());
 		}
 	},
 	MENU_LOADER ("loader", "png", false, false) {

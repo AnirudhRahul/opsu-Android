@@ -39,7 +39,6 @@ import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.beatmap.Beatmap;
 import itdelatrisu.opsu.beatmap.Health;
 import itdelatrisu.opsu.beatmap.HitObject;
-import itdelatrisu.opsu.downloads.Updater;
 import itdelatrisu.opsu.objects.curves.Curve;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.replay.LifeFrame;
@@ -1728,7 +1727,6 @@ public class GameData {
 
 		replay = new Replay();
 		replay.mode = Beatmap.MODE_OSU;
-		replay.version = Updater.get().getBuildDate();
 		replay.beatmapHash = (beatmap == null) ? "" : beatmap.md5Hash;
 		replay.playerName = UserList.get().getCurrentUser().getName();
 		replay.replayHash = Long.toString(System.currentTimeMillis());  // TODO

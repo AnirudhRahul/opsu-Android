@@ -27,7 +27,6 @@ import itdelatrisu.opsu.beatmap.BeatmapSetList;
 import itdelatrisu.opsu.beatmap.BeatmapSortOrder;
 import itdelatrisu.opsu.beatmap.BeatmapWatchService;
 import itdelatrisu.opsu.downloads.DownloadList;
-import itdelatrisu.opsu.downloads.Updater;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.render.CurveRenderState;
 import itdelatrisu.opsu.render.LegacyCurveRenderState;
@@ -207,9 +206,6 @@ public class Container extends AppGameContainer {
 		if (forceExit) {
 			if (DownloadList.get().hasActiveDownloads() &&
 			    UI.showExitConfirmation(DownloadList.EXIT_CONFIRMATION))
-				return;
-			if (Updater.get().getStatus() == Updater.Status.UPDATE_DOWNLOADING &&
-			    UI.showExitConfirmation(Updater.EXIT_CONFIRMATION))
 				return;
 		}
 

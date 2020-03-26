@@ -44,7 +44,6 @@ import itdelatrisu.opsu.audio.SoundController;
 import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.beatmap.BeatmapSetList;
 import itdelatrisu.opsu.beatmap.BeatmapSetNode;
-import itdelatrisu.opsu.downloads.Updater;
 import itdelatrisu.opsu.ui.Fonts;
 import itdelatrisu.opsu.ui.MenuButton;
 import itdelatrisu.opsu.ui.UI;
@@ -305,12 +304,11 @@ public class ButtonMenu extends BasicGameState {
 		ABOUT (new Button[] { Button.ABOUT_WEBSITE, Button.ABOUT_REPOSITORY, Button.ABOUT_REPORT, Button.ABOUT_CREDITS, Button.ABOUT_PRIVACY, Button.ABOUT_CLOSE }) {
 			@Override
 			public String[] getTitle(GameContainer container, StateBasedGame game) {
-				String version = Updater.get().getCurrentVersion();
 				return new String[] {
 					String.format(
 						"%s %s by %s",
 						OpsuConstants.PROJECT_NAME,
-						(version == null) ? "(unknown version)" : "v" + version,
+						OpsuConstants.VERSION,
 						OpsuConstants.PROJECT_AUTHOR
 					),
 					"Click an option below to learn more!"

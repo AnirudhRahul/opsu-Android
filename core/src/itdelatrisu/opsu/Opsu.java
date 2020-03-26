@@ -35,7 +35,6 @@ import fluddokt.opsu.fake.StateBasedGame;
 import itdelatrisu.opsu.audio.MusicController;
 import itdelatrisu.opsu.db.DBController;
 import itdelatrisu.opsu.downloads.DownloadList;
-import itdelatrisu.opsu.downloads.Updater;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.states.ButtonMenu;
 import itdelatrisu.opsu.states.DownloadsMenu;
@@ -307,9 +306,6 @@ public class Opsu extends StateBasedGame {
 		// show confirmation dialog if any downloads are active
 		if (DownloadList.get().hasActiveDownloads() &&
 		    UI.showExitConfirmation(DownloadList.EXIT_CONFIRMATION))
-			return false;
-		if (Updater.get().getStatus() == Updater.Status.UPDATE_DOWNLOADING &&
-		    UI.showExitConfirmation(Updater.EXIT_CONFIRMATION))
 			return false;
 
 		return true;

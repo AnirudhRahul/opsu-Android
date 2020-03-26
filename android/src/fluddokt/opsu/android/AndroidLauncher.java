@@ -160,10 +160,15 @@ public class AndroidLauncher extends AndroidApplication implements SurfaceHolder
 			}
 			@Override
 			public void restart(){
-				Intent i = getBaseContext().getPackageManager().getLaunchIntentForPackage(getBaseContext().getPackageName());
-				i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-				startActivity(i);
-				finish();
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+					finishAffinity();
+					Intent intent = new Intent(getApplicationContext(), AndroidLauncher.class);
+					startActivity(intent);
+				} else {
+					ActivityCompat.finishAffinity(AndroidLauncher.this);
+					Intent intent = new Intent(getApplicationContext(), AndroidLauncher.class);
+					startActivity(intent);
+				}
 			}
 
 		};

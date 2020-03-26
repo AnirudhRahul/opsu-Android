@@ -25,12 +25,12 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Stack;
 
+import fluddokt.ex.DeviceInfo;
 import fluddokt.ex.InterstitialAdLoader;
 import fluddokt.newdawn.slick.state.transition.EasedFadeOutTransition;
 import fluddokt.newdawn.slick.state.transition.FadeInTransition;
 import fluddokt.opsu.fake.BasicGameState;
 import fluddokt.opsu.fake.Color;
-import fluddokt.opsu.fake.Desktop;
 import fluddokt.opsu.fake.GameContainer;
 import fluddokt.opsu.fake.Graphics;
 import fluddokt.opsu.fake.Image;
@@ -47,7 +47,6 @@ import itdelatrisu.opsu.audio.SoundEffect;
 import itdelatrisu.opsu.beatmap.Beatmap;
 import itdelatrisu.opsu.beatmap.BeatmapSetList;
 import itdelatrisu.opsu.beatmap.BeatmapSetNode;
-import itdelatrisu.opsu.downloads.Updater;
 import itdelatrisu.opsu.options.OptionGroup;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.options.OptionsOverlay;
@@ -127,9 +126,6 @@ public class MainMenu extends BasicGameState {
 
 	/** Button that hard resets the game */
 	private MenuButton resetButton;
-
-	/** Buttons for installing updates. */
-	private MenuButton updateButton, restartButton;
 
 	/** Application start time, for drawing the total running time. */
 	private long programStartTime;
@@ -273,37 +269,29 @@ public class MainMenu extends BasicGameState {
 
 
 		// initialize repository button
-		Image repoImg = GameImage.REPOSITORY.getImage();
-		int repoMargin = (int) (height * 0.01f);
-		float repoScale = 1.25f;
+		float footerX = 0.02f * width;
+		float footerMargin = 0.025f * height;
+		Image resetImg = GameImage.MENU_RELOAD.getImage();
+		float resetScale = 1.1f;
+		resetButton = new MenuButton(resetImg,
+				footerX + resetImg.getWidth() * resetScale / 2,
+				height - footerMargin - resetImg.getHeight() * resetScale / 2
+		);
+
+		resetButton.setHoverAnimationDuration(350);
+		resetButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
+		resetButton.setHoverExpand(resetScale);
+
+		footerX += 0.01f * width + resetImg.getWidth() * resetScale;
+		Image repoImg = GameImage.REPOSITORY.getImage().getScaledCopy(1.2f);
+		float repoScale = 1.3f;
 		repoButton = new MenuButton(repoImg,
-			repoMargin + repoImg.getWidth() * repoScale / 2,
-			height - repoMargin - repoImg.getHeight() * repoScale / 2
+				footerX + repoImg.getWidth() * repoScale / 2,
+				height - footerMargin - resetImg.getHeight() * resetScale / 2
 		);
 		repoButton.setHoverAnimationDuration(350);
 		repoButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_BACK);
 		repoButton.setHoverExpand(repoScale);
-
-		Image resetImg = GameImage.MENU_RELOAD.getImage();
-		float resetScale = 1f;
-		resetButton = new MenuButton(resetImg,
-				repoButton.getX()+repoMargin+ resetImg.getWidth() * resetScale / 2,
-				height - repoMargin - resetImg.getHeight() * resetScale / 2
-		);
-
-
-		// initialize update buttons
-		float updateX = width / 2f, updateY = height * 17 / 18f;
-		Image downloadImg = GameImage.DOWNLOAD.getImage();
-		updateButton = new MenuButton(downloadImg, updateX, updateY);
-		updateButton.setHoverAnimationDuration(400);
-		updateButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_QUAD);
-		updateButton.setHoverExpand(1.1f);
-		Image updateImg = GameImage.UPDATE.getImage();
-		restartButton = new MenuButton(updateImg, updateX, updateY);
-		restartButton.setHoverAnimationDuration(2000);
-		restartButton.setHoverAnimationEquation(AnimationEquation.LINEAR);
-		restartButton.setHoverRotate(360);
 
 		// initialize star fountain
 		starFountain = new StarFountain(width, height);
@@ -458,14 +446,8 @@ public class MainMenu extends BasicGameState {
 		// draw repository button
 		repoButton.draw();
 
-		// draw update button
-		if (Updater.get().showButton()) {
-			Updater.Status status = Updater.get().getStatus();
-			if (status == Updater.Status.UPDATE_AVAILABLE || status == Updater.Status.UPDATE_DOWNLOADING)
-				updateButton.draw();
-			else if (status == Updater.Status.UPDATE_DOWNLOADED)
-				restartButton.draw();
-		}
+		//draw reset button
+		resetButton.draw();
 
 		// draw user button
 		userButton.setUser(UserList.get().getCurrentUser());
@@ -528,12 +510,10 @@ public class MainMenu extends BasicGameState {
 			logo.hoverUpdate(delta, mouseX, mouseY, 0.25f);
 
 		repoButton.hoverUpdate(delta, mouseX, mouseY);
-		if (Updater.get().showButton()) {
-			updateButton.autoHoverUpdate(delta, true);
-			restartButton.autoHoverUpdate(delta, false);
-		}
+		resetButton.hoverUpdate(delta, mouseX, mouseY);
 		downloadsButton.hoverUpdate(delta, mouseX, mouseY);
 //		profileButton.hoverUpdate(delta, mouseX, mouseY);
+
 		// ensure only one button is in hover state at once
 		boolean noHoverUpdate = musicPositionBarContains(mouseX, mouseY);
 		boolean contains = musicPlay.contains(mouseX, mouseY);
@@ -640,19 +620,16 @@ public class MainMenu extends BasicGameState {
 		else if (musicPrevious.contains(mouseX, mouseY))
 			UI.updateTooltip(delta, "Previous track", false);
 		else if (repoButton.contains(mouseX, mouseY)) {
-			String version = Updater.get().getCurrentVersion();
 			String tooltip = String.format(Locale.US,
 				"running %s %s\ncreated by %s",
 				OpsuConstants.PROJECT_NAME,
-				(version == null) ? "(unknown version)" : "v" + version,
+				OpsuConstants.VERSION,
 				OpsuConstants.PROJECT_AUTHOR
 			);
 			UI.updateTooltip(delta, tooltip, true);
-		} else if (Updater.get().showButton()) {
-			Updater.Status status = Updater.get().getStatus();
-			if (((status == Updater.Status.UPDATE_AVAILABLE || status == Updater.Status.UPDATE_DOWNLOADING) && updateButton.contains(mouseX, mouseY)) ||
-			    (status == Updater.Status.UPDATE_DOWNLOADED && restartButton.contains(mouseX, mouseY)))
-				UI.updateTooltip(delta, status.getDescription(), true);
+		}
+		else if(resetButton.contains(mouseX, mouseY)){
+			UI.updateTooltip(delta, "Reload all game files", false);
 		}
 	}
 
@@ -739,10 +716,10 @@ public class MainMenu extends BasicGameState {
 			musicNext.resetHover();
 		if (!musicPrevious.contains(mouseX, mouseY))
 			musicPrevious.resetHover();
-		if (repoButton != null && !repoButton.contains(mouseX, mouseY))
+		if (!repoButton.contains(mouseX, mouseY))
 			repoButton.resetHover();
-		updateButton.resetHover();
-		restartButton.resetHover();
+		if (!resetButton.contains(mouseX, mouseY))
+			resetButton.resetHover();
 		if (!downloadsButton.contains(mouseX, mouseY))
 			downloadsButton.resetHover();
 //		if(!profileButton.contains(mouseX, mouseY))
@@ -842,24 +819,12 @@ public class MainMenu extends BasicGameState {
 			return;
 		}
 
-		// update button actions
-		if (Updater.get().showButton()) {
-			Updater.Status status = Updater.get().getStatus();
-			if (updateButton.contains(x, y) && status == Updater.Status.UPDATE_AVAILABLE) {
-				SoundController.playSound(SoundEffect.MENUHIT);
-				Updater.get().startDownload();
-				updateButton.removeHoverEffects();
-				updateButton.setHoverAnimationDuration(800);
-				updateButton.setHoverAnimationEquation(AnimationEquation.IN_OUT_QUAD);
-				updateButton.setHoverFade(0.6f);
-				return;
-			} else if (restartButton.contains(x, y) && status == Updater.Status.UPDATE_DOWNLOADED) {
-				SoundController.playSound(SoundEffect.MENUHIT);
-				Updater.get().prepareUpdate();
-				container.setForceExit(false);
-				container.exit();
-				return;
-			}
+		if (resetButton.contains(x, y)) {
+			SoundController.playSound(SoundEffect.MENUHIT);
+			DeviceInfo.info.setHardReset(true);
+//			System.exit(0);
+			DeviceInfo.info.restart();
+			return;
 		}
 
 		// user button actions
@@ -1003,10 +968,7 @@ public class MainMenu extends BasicGameState {
 		musicPause.resetHover();
 		musicNext.resetHover();
 		musicPrevious.resetHover();
-		if (repoButton != null)
-			repoButton.resetHover();
-		updateButton.resetHover();
-		restartButton.resetHover();
+		repoButton.resetHover();
 		downloadsButton.resetHover();
 //		profileButton.resetHover();
 		userButton.resetHover();

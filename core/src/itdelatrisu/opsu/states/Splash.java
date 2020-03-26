@@ -24,7 +24,6 @@ import fluddokt.opsu.fake.Color;
 import fluddokt.opsu.fake.File;
 import fluddokt.opsu.fake.GameContainer;
 import fluddokt.opsu.fake.Graphics;
-import fluddokt.opsu.fake.Input;
 import fluddokt.opsu.fake.SlickException;
 import fluddokt.opsu.fake.StateBasedGame;
 import itdelatrisu.opsu.GameImage;
@@ -34,7 +33,6 @@ import itdelatrisu.opsu.audio.MusicController;
 import itdelatrisu.opsu.audio.SoundController;
 import itdelatrisu.opsu.beatmap.BeatmapParser;
 import itdelatrisu.opsu.beatmap.BeatmapSetList;
-import itdelatrisu.opsu.beatmap.BeatmapWatchService;
 import itdelatrisu.opsu.beatmap.OszUnpacker;
 import itdelatrisu.opsu.options.Options;
 import itdelatrisu.opsu.replay.ReplayImporter;
@@ -124,10 +122,10 @@ public class Splash extends BasicGameState {
 	@Override
 	public void update(GameContainer container, StateBasedGame game, int delta)
 			throws SlickException {
-		if (!init && !DeviceInfo.info.getHardReset()) {
+		if (!init) {
 			init = true;
 			// resources already loaded (from application restart)
-			if (BeatmapSetList.get() != null) {
+			if (BeatmapSetList.get() != null && !DeviceInfo.info.getHardReset()) {
 				if (newSkin || watchServiceChange) {  // need to reload resources
 					thread = new Thread() {
 						@Override
@@ -180,10 +178,11 @@ public class Splash extends BasicGameState {
 
 						finished = true;
 						thread = null;
-						DeviceInfo.info.setHardReset(false);
 					}
 				};
 				thread.start();
+				if(DeviceInfo.info.getHardReset())
+					DeviceInfo.info.setHardReset(false);
 			}
 		}
 

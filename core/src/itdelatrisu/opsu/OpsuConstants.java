@@ -18,10 +18,7 @@
 
 package itdelatrisu.opsu;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.util.Locale;
 
 /**
  * Project-specific constants.
@@ -30,11 +27,14 @@ public class OpsuConstants {
 	/** Project name. */
 	public static final String PROJECT_NAME = "opsu!";
 
+	/** Project name. */
+	public static final String VERSION = "v1.15";
+
 	/** Project author. */
 	public static final String PROJECT_AUTHOR = "@itdelatrisu + @fluddokt+@anirudhrahul";
 
 	/** Website address. */
-	public static final URI WEBSITE_URI = URI.create("https://itdelatrisu.github.io/opsu/");
+	public static final URI WEBSITE_URI = URI.create("https://play.google.com/store/apps/details?id=fluddokt.opsu.android");
 
 	/** Repository address. */
 	public static final URI REPOSITORY_URI = URI.create("https://github.com/AnirudhRahul/opsu");
@@ -46,22 +46,8 @@ public class OpsuConstants {
 	public static final URI PRIVACY_URI = URI.create("https://github.com/AnirudhRahul/opsu-Android/blob/master/privacyPolicy.txt");
 
 	/** Issue reporting address. */
-	public static final String ISSUES_URL = "https://play.google.com/store/apps/details?id=fluddokt.opsu.android&hl=en";
+	public static final String ISSUES_URL = "https://play.google.com/store/apps/details?id=fluddokt.opsu.android";
 
-	/** Address containing the latest version file. */
-	public static final String VERSION_REMOTE = "https://raw.githubusercontent.com/itdelatrisu/opsu/gh-pages/version";
-
-	/** Changelog address. */
-	private static final String CHANGELOG_URL = "https://github.com/fluddokt/opsu/releases/tag/%s";
-
-	/** Returns the changelog URI for the given version. */
-	public static URI getChangelogURI(String version) {
-		try {
-			return URI.create(String.format(Locale.US,CHANGELOG_URL, URLEncoder.encode(version, "UTF-8")));
-		} catch (UnsupportedEncodingException e) {
-			return WEBSITE_URI;
-		}
-	}
 
 	// This class should not be instantiated.
 	private OpsuConstants() {}
