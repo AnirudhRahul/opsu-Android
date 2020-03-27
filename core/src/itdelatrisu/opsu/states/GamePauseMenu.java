@@ -90,7 +90,7 @@ public class GamePauseMenu extends BasicGameState {
 		int height = container.getHeight();
 		musicBarX = width * 0.01f;
 		musicBarY = height * 0.05f;
-		musicBarWidth = Math.max(width * 0.007f, 10);
+		musicBarWidth = Math.max(width * 0.012f, 15);
 		musicBarHeight = height * 0.9f;
 	}
 
@@ -122,7 +122,7 @@ public class GamePauseMenu extends BasicGameState {
 		g.fillRoundRect(musicBarX, musicBarY, musicBarWidth, musicBarHeight, 4);
 		g.setColor(MUSICBAR_FILL);
 		float musicBarPosition = useVideo? 	Options.GameOption.VIDEO_BRIGHTNESS.getIntegerValue()/255f:
-											Options.GameOption.BACKGROUND_DIM.getIntegerValue()/100f;
+											1f-Options.GameOption.BACKGROUND_DIM.getIntegerValue()/100f;
 		g.fillRoundRect(musicBarX, musicBarY + musicBarHeight * (1 - musicBarPosition), musicBarWidth, musicBarHeight * musicBarPosition, 4);
 
 		UI.draw(g);
@@ -233,8 +233,9 @@ public class GamePauseMenu extends BasicGameState {
 				Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(255f*pos));
 			}
 			else{
-				Options.GameOption.BACKGROUND_DIM.setValue(Math.round(100f*pos));
+				Options.GameOption.BACKGROUND_DIM.setValue(Math.round(100f*(1f-pos)));
 			}
+			UI.getNotificationManager().sendBarNotification("Adjusting Brightness");
 			adjusting=true;
 
 		}
@@ -242,14 +243,13 @@ public class GamePauseMenu extends BasicGameState {
 	@Override
 	public void mouseDragged(int oldx, int oldy, int newx, int newy){
 		if(musicPositionBarContains(oldx,oldy)||adjusting){
-			float pos = (musicBarHeight - newy + musicBarY) / musicBarHeight * 255f;
+			float pos = (musicBarHeight - newy + musicBarY) / musicBarHeight;
 			if(useVideo) {
 				Options.GameOption.VIDEO_BRIGHTNESS.setValue(Math.round(255f*pos));
 			}
 			else{
-				Options.GameOption.BACKGROUND_DIM.setValue(Math.round(100f*pos));
+				Options.GameOption.BACKGROUND_DIM.setValue(Math.round(100f*(1f-pos)));
 			}
-			UI.getNotificationManager().sendBarNotification("Adjusting Brightness");
 		}
 		else {
 			adjusting = false;
