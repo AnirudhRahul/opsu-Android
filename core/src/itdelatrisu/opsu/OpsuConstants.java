@@ -31,7 +31,7 @@ public class OpsuConstants {
 	public static final String VERSION = "v1.15";
 
 	/** Project author. */
-	public static final String PROJECT_AUTHOR = "@itdelatrisu + @fluddokt+@anirudhrahul";
+	public static final String PROJECT_AUTHOR = "@itdelatrisu + @fluddokt + @anirudhrahul";
 
 	/** Website address. */
 	public static final URI WEBSITE_URI = URI.create("https://play.google.com/store/apps/details?id=fluddokt.opsu.android");
