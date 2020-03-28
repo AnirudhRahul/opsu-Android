@@ -180,7 +180,7 @@ public class GamePauseMenu extends BasicGameState {
 		case Input.KEY_R:
 			// restart
 			if (input.isKeyDown(Input.KEY_RCONTROL) || input.isKeyDown(Input.KEY_LCONTROL)) {
-				gameState.setPlayState(Game.PlayState.RETRY);
+				gameState.setPlayState(Game.PlayState.NORMAL);
 				game.enterState(Opsu.STATE_GAME);
 			}
 			break;
@@ -209,7 +209,7 @@ public class GamePauseMenu extends BasicGameState {
 			SoundController.playSound(SoundEffect.MENUHIT);
 			if(useVideo)
 			VideoLoader.loader.seek(0);
-			gameState.setPlayState(Game.PlayState.RETRY);
+			gameState.setPlayState(Game.PlayState.NORMAL);
 			game.enterState(Opsu.STATE_GAME);
 		} else if (backButton.contains(x, y)) {
 			SoundController.playSound(SoundEffect.MENUBACK);
