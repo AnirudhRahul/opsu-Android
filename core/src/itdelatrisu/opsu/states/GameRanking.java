@@ -246,7 +246,7 @@ public class GameRanking extends BasicGameState {
 		         (!GameMod.AUTO.isActive() && retryButtonPressed) ||
 		         (GameMod.AUTO.isActive() && replayButtonPressed)) {
 			gameState.setReplay(null);
-			gameState.setPlayState(Game.PlayState.RETRY);
+			gameState.setPlayState(Game.PlayState.NORMAL);
 			returnToGame = true;
 		}
 		else if (!GameMod.AUTO.isActive() && leaderButtonPressed && !UserList.get().getCurrentUser().getName().equals("Guest") && scoreData.playerName.equals(UserList.get().getCurrentUser().getName())&&scoreData.settings==0) {

@@ -116,8 +116,6 @@ public class Game extends BasicGameState {
 		NORMAL,
 		/** First time loading the song. */
 		FIRST_LOAD,
-		/** Manual retry. */
-		RETRY,
 		/** Replay. */
 		REPLAY,
 		/** Health is zero: no-continue/force restart. */
@@ -239,9 +237,6 @@ public class Game extends BasicGameState {
 
 	/** Rotations for game objects at death. */
 	private IdentityHashMap<GameObject, Float> rotations;
-
-	/** Number of retries. */
-	private int retries = 0;
 	
 	/** The last Mouse positions. */
 	private int lastMouseX, lastMouseY;
@@ -669,22 +664,6 @@ public class Game extends BasicGameState {
 			if (objectIndex == 0 && trackPosition < beatmap.objects[0].getTime() - SKIP_OFFSET)
 				skipButton.draw();
 
-			// show retries
-			if (objectIndex == 0 && retries >= 2 && timeDiff >= -1000) {
-				int retryHeight = Math.max(
-						GameImage.SCOREBAR_BG.getImage().getHeight(),
-						GameImage.SCOREBAR_KI.getImage().getHeight()
-				);
-				float oldAlpha = Colors.WHITE_FADE.a;
-				if (timeDiff < -500)
-					Colors.WHITE_FADE.a = (1000 + timeDiff) / 500f;
-				Fonts.MEDIUM.drawString(
-						2 + (width / 100), retryHeight,
-						String.format(Locale.US,"%d retries and counting...", retries),
-						Colors.WHITE_FADE
-				);
-				Colors.WHITE_FADE.a = oldAlpha;
-			}
 
 			/*
 			if (isLeadIn())  // render approach circles during song lead-in
@@ -1192,7 +1171,6 @@ public class Game extends BasicGameState {
 //						video.pause();
 					if(useVideo)
 						VideoLoader.loader.pause();
-//					UI.getNotificationManager().sendNotification("video pause 2");
 					return;
 				}
 			}
@@ -1315,9 +1293,7 @@ public class Game extends BasicGameState {
 			if (gameFinished)
 				break;
 			try {
-				if (trackPosition < beatmap.objects[0].getTime())
-					retries--;  // don't count this retry (cancel out later increment)
-				playState = PlayState.RETRY;
+				playState = PlayState.NORMAL;
 				enter(container, game);
 				skipIntro();
 			} catch (SlickException e) {
@@ -1348,7 +1324,7 @@ public class Game extends BasicGameState {
 				if (checkpoint == 0 || checkpoint > beatmap.endTime)
 					break;  // invalid checkpoint
 				try {
-					playState = PlayState.RETRY;
+					playState = PlayState.NORMAL;
 					enter(container, game);
 					checkpointLoaded = true;
 					/*
@@ -1647,11 +1623,6 @@ public class Game extends BasicGameState {
 			if (playState == PlayState.FIRST_LOAD) {
 				loadImages();
 				setMapModifiers();
-				retries = 0;
-			} else if (playState == PlayState.RETRY && !GameMod.AUTO.isActive()) {
-				retries++;
-			} else if (playState == PlayState.REPLAY || GameMod.AUTO.isActive()) {
-				retries = 0;
 			}
 
 			gameObjects = new GameObject[beatmap.objects.length];
@@ -1786,7 +1757,7 @@ public class Game extends BasicGameState {
 
 			// using local offset?
 			if (beatmap.localMusicOffset != 0)
-				UI.getNotificationManager().sendBarNotification(String.format("Using local beatmap offset (%dms)", beatmap.localMusicOffset));
+				UI.getNotificationManager().sendBarNotification(String.format(Locale.US,"Using local beatmap offset (%dms)", beatmap.localMusicOffset));
 
 			// using custom difficulty settings?
 			if (Options.getFixedCS() > 0f || Options.getFixedAR() > 0f || Options.getFixedOD() > 0f ||
