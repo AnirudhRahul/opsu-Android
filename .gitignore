@@ -46,3 +46,10 @@ build/
 
 ## OS Specific
 .DS_Store
+
+
+## Secrets
+android/release
+android/debug
+google-services.json
+android/res/values/strings.xml
